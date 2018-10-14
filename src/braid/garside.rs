@@ -24,7 +24,7 @@ fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
  * Decompose a braid into a power of delta_n and a positive braid on the right.
  * NOTE: This is based on step 1 and 2 of Garside Normal Form
  */
-fn left_slide_delta_form(b: Braid) -> (usize, Braid) {
+fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
     let n = b.n;
     let mut final_vec: Vec<BrGen> = b.contents.clone();
     let mut counter = 0;
@@ -65,7 +65,7 @@ fn left_slide_delta_form(b: Braid) -> (usize, Braid) {
  * Choose the longest permutation braids possible.
  * Original algorithm by me
  */
-pub fn break_into_permutations(b: Braid) -> Vec<Braid> {
+pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     let n = b.n;
     // String at position i is string # string_pos[i - 1]
     let mut string_pos: Vec<usize> = (1..=n).collect();
@@ -121,6 +121,16 @@ pub fn break_into_permutations(b: Braid) -> Vec<Braid> {
     return res;
 }
 
+pub fn is_left_weighted(b: &Braid) -> bool {
+    let ps = break_into_permutations(b);
+    for i in 0..ps.len() - 1 {
+        if !ps[i].finishing_set().is_superset(&ps[i + 1].starting_set()) {
+            return false;
+        }
+    }
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -137,7 +147,7 @@ mod tests {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
         let contents = vec![BrGen::Sigma(1), BrGen::SigmaInv(3), BrGen::Sigma(2)];
         let w = Braid {contents: contents, n: 4};
-        let lsdf = left_slide_delta_form(w);
+        let lsdf = left_slide_delta_form(&w);
         assert_eq!(1, lsdf.0);
         let expected = Braid::make_positive(vec![3, 3, 2, 1, 3, 2, 2], 4);
         assert_eq!(expected.contents, lsdf.1.contents);
@@ -146,15 +156,25 @@ mod tests {
     #[test]
     fn break_into_permutations_tests() {
         let b = Braid::make_positive(vec![1, 2, 2, 1, 2], 3);
-        let ps = break_into_permutations(b);
+        let ps = break_into_permutations(&b);
         assert_eq!(ps[0].contents, Braid::make_positive(vec![1, 2], 3).contents);
         assert_eq!(ps[1].contents, Braid::make_positive(vec![2, 1, 2], 3).contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
         let b = Braid::from_permutation(p);
         let old_contents = b.contents.clone();
-        let ps = break_into_permutations(b);
+        let ps = break_into_permutations(&b);
         assert_eq!(ps.len(), 1);
         assert_eq!(ps[0].contents, old_contents);
+    }
+
+    #[test]
+    fn is_left_weighted_tests() {
+        // From Page 12/13 of Garber
+        assert!(!is_left_weighted(&Braid::make_positive(vec![1, 2, 2, 1, 2], 3)));
+        assert!(is_left_weighted(&Braid::make_positive(vec![1, 2, 2, 1], 3)));
+
+        assert!(!is_left_weighted(&Braid::make_positive(vec![3, 3, 2, 1, 3, 2, 2], 4)));
+        assert!(is_left_weighted(&Braid::make_positive(vec![2, 1, 3, 2, 1, 1, 2], 4)));
     }
 }

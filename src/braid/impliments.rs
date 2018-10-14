@@ -1,5 +1,6 @@
 
 use std::ops::Add;
+use std::collections::HashSet;
 
 use braid::internals::*;
 
@@ -135,6 +136,68 @@ impl Braid {
     pub fn free_reduce(&mut self) {
         while self.free_reduce_once() {}
     }
+
+    /**
+     * Find the starting set of a braid. Original algorithm. Assumes
+     * this is a positive permutation braid.
+     * ASSUMPTION: i is in the starting set iff strand i and strand i + 1
+     * cross once.
+     */
+    pub fn starting_set(&self) -> HashSet<usize> {
+        let n = self.n;
+        let mut res = HashSet::with_capacity(n);
+        let mut string_pos: Vec<usize> = (1..=n).collect();
+        // Iterate through each of our generators
+        for gen in self.contents.iter() {
+            if let BrGen::Sigma(a) = gen {
+                let sa = string_pos[*a - 1];
+                let sb = string_pos[*a];
+                if sa == sb + 1 {
+                    res.insert(sb);
+                } else if sb == sa + 1{
+                    res.insert(sa);
+                }
+                // swap the strings
+                string_pos[*a] = sa;
+                string_pos[*a - 1] = sb;
+            } else {
+                panic!("The braid given was not positive!");
+            }
+        }
+        res
+    }
+
+    /**
+     * Find the finishing set of a braid. Original algorithm. Assumes
+     * this is a positive permutation braid.
+     * ASSUMPTION: i is in the finishing set iff the strands which end up at
+     * indices i and i + 1 cross once
+     */
+    pub fn finishing_set(&self) -> HashSet<usize> {
+        let n = self.n;
+        let mut res = HashSet::with_capacity(n);
+        let mut string_pos: Vec<usize> = (1..=n).collect();
+        // Iterate through each of our generators
+        for gen in self.contents.iter() {
+            if let BrGen::Sigma(a) = gen {
+                let sa = string_pos[*a - 1];
+                let sb = string_pos[*a];
+                // swap the strings
+                string_pos[*a] = sa;
+                string_pos[*a - 1] = sb;
+            } else {
+                panic!("The braid given was not positive!");
+            }
+        }
+
+        for i in 1..n {
+            if string_pos[i] < string_pos[i - 1] {
+                res.insert(i);
+            }
+        }
+
+        res
+    }
 }
 
 #[cfg(test)]
@@ -167,5 +230,24 @@ mod tests {
         let b = Braid::from_permutation(p);
         let b2 = Braid::make_positive(vec![2, 6, 5, 4, 3, 5], 7);
         assert_eq!(b.contents, b2.contents);
+    }
+
+    #[test]
+    fn starting_finishing_set_tests() {
+        let b = Braid::make_half_twist(6);
+        println!("{:?}", b.starting_set());
+        println!("{:?}", b.finishing_set());
+        println!("");
+        let b1 = Braid::make_positive(vec![2,1,3,2,1], 4);
+        let b2 = Braid::make_positive(vec![1,2], 4);
+
+        println!("{:?}, {:?}", b1.starting_set(), b2.starting_set());
+        println!("{:?}, {:?}", b1.finishing_set(), b2.finishing_set());
+        println!("");
+
+        let b1 = Braid::make_positive(vec![1,2], 3);
+        let b2 = Braid::make_positive(vec![2,1,2], 3);
+        println!("{:?}, {:?}", b1.starting_set(), b2.starting_set());
+        println!("{:?}, {:?}", b1.finishing_set(), b2.finishing_set());
     }
 }
