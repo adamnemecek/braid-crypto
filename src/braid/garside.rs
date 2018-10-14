@@ -2,6 +2,23 @@
 
 use braid::internals::*;
 use std::collections::HashSet;
+use std::fmt;
+
+type Permutation = Vec<usize>;
+
+pub struct GarsideForm {
+    delta_exp: usize,
+    permutations: Vec<Permutation>,
+}
+
+impl fmt::Display for GarsideForm {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let vec_string: String = format!("{:?}", self.permutations);
+        let vec_string: String = vec_string[1..vec_string.len() - 1].to_string();
+        let vec_string = vec_string.replace("[", "(").replace("]", ")");
+        write!(f, "[{};{}]", self.delta_exp, vec_string)
+    }
+}
 
 /**
  * Calculate what B_i should be given that sigma_i^-1 = delta_n^-1 B_i
@@ -131,6 +148,72 @@ pub fn is_left_weighted(b: &Braid) -> bool {
     true
 }
 
+fn braid_to_permutation(b: &Braid) -> Vec<usize> {
+    let mut starting: Vec<usize> = (1..=b.n).collect();
+    braid_to_permutation_with_starting(b, &mut starting);
+    starting
+}
+
+fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>){
+    // let mut string_pos: Vec<usize> = (1..=n).collect();
+    let string_pos = starting;
+    // Iterate through each of our generators
+    for gen in b.contents.iter() {
+        if let BrGen::Sigma(a) = gen {
+            let sa = string_pos[*a - 1];
+            let sb = string_pos[*a];
+            // swap the strings
+            string_pos[*a] = sa;
+            string_pos[*a - 1] = sb;
+        } else {
+            panic!("The braid given was not positive!");
+        }
+    }
+}
+
+pub fn garside_form(b: &Braid) -> GarsideForm {
+    let n = b.n;
+    let (exponent, braid) = left_slide_delta_form(b);
+    let mut bs = break_into_permutations(&braid);
+    let mut working_index = 0;
+    while working_index < bs.len() - 1 {
+        // Split bs to take multiple mutable references
+        let (head, tail) = bs.split_at_mut(working_index + 1); 
+        let bi = &mut head[working_index];
+        let bi1 = &mut tail[0];
+        let mut next_starting = bi1.starting_set();
+        let mut prev_finishing = bi.finishing_set();
+        while !prev_finishing.is_superset(&next_starting) {
+            {
+                let j = next_starting.difference(&prev_finishing).next().unwrap();
+                // j is in S(B_i+1) but not F(B_i)
+                // bi is easy, just push a sigma on the end
+                bi.contents.push(BrGen::Sigma(*j));
+                // bi1 is harder.
+                // We want to put a sigma -j on the beginning, but we want it to stay positive
+                // Instead, let's consider bi1 as a permutation with j and j + 1 switched
+                let mut perm: Vec<usize> = (1..=n).collect();
+                perm[*j - 1] = *j + 1;
+                perm[*j] = *j;
+                braid_to_permutation_with_starting(bi1, &mut perm);
+                // Now, we turn it back into a permutation braid
+                let pb = Braid::from_permutation(perm);
+                // and replace bi1 with it
+                bi1.contents = pb.contents.clone();
+            } // For j to go out of scope (j borrows bi1 and bi)
+            next_starting = bi1.starting_set();
+            prev_finishing = bi.finishing_set();
+        }
+        working_index += 1;
+    }
+    // Recombine bs
+    let mut result: Vec<Permutation> = Vec::new();
+    for braid in &mut bs {
+        result.push(braid_to_permutation(braid));
+    }
+    GarsideForm {delta_exp: exponent, permutations: result}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -176,5 +259,21 @@ mod tests {
 
         assert!(!is_left_weighted(&Braid::make_positive(vec![3, 3, 2, 1, 3, 2, 2], 4)));
         assert!(is_left_weighted(&Braid::make_positive(vec![2, 1, 3, 2, 1, 1, 2], 4)));
+    }
+
+    #[test]
+    fn garside_form_tests() {
+        // From page 13/14 of Garber
+        let b = Braid {contents: vec![BrGen::Sigma(1), BrGen::SigmaInv(3), BrGen::Sigma(2)], n:4};
+        let gform = garside_form(&b);
+        
+        let expected_exp = 1;
+        let expected_perm1 = braid_to_permutation(&Braid::make_positive(vec![2, 1, 3, 2, 1], 4));
+        let expected_perm2 = braid_to_permutation(&Braid::make_positive(vec![1, 2], 4));
+
+        assert_eq!(expected_exp, gform.delta_exp);
+        assert_eq!(expected_perm1, gform.permutations[0]);
+        assert_eq!(expected_perm2, gform.permutations[1]);
+        println!("{}", gform);
     }
 }

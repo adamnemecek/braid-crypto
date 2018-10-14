@@ -1,6 +1,7 @@
 
 use std::ops::Add;
-use std::collections::HashSet;
+use indexmap::set::IndexSet;
+
 
 use braid::internals::*;
 
@@ -143,9 +144,9 @@ impl Braid {
      * ASSUMPTION: i is in the starting set iff strand i and strand i + 1
      * cross once.
      */
-    pub fn starting_set(&self) -> HashSet<usize> {
+    pub fn starting_set(&self) -> IndexSet<usize> {
         let n = self.n;
-        let mut res = HashSet::with_capacity(n);
+        let mut res = IndexSet::with_capacity(n);
         let mut string_pos: Vec<usize> = (1..=n).collect();
         // Iterate through each of our generators
         for gen in self.contents.iter() {
@@ -173,9 +174,9 @@ impl Braid {
      * ASSUMPTION: i is in the finishing set iff the strands which end up at
      * indices i and i + 1 cross once
      */
-    pub fn finishing_set(&self) -> HashSet<usize> {
+    pub fn finishing_set(&self) -> IndexSet<usize> {
         let n = self.n;
-        let mut res = HashSet::with_capacity(n);
+        let mut res = IndexSet::with_capacity(n);
         let mut string_pos: Vec<usize> = (1..=n).collect();
         // Iterate through each of our generators
         for gen in self.contents.iter() {
