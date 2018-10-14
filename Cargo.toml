@@ -1,0 +1,7 @@
+[package]
+name = "braid-crypto"
+version = "0.1.0"
+authors = ["torrencem <matt@torrencefamily.net>"]
+
+[dependencies]
+rand = "*"
