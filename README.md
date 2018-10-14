@@ -1,5 +1,7 @@
 # braid-crypto
 
+[![Build Status](https://travis-ci.org/Torrencem/braid-crypto.svg?branch=master)](https://travis-ci.org/Torrencem/braid-crypto)
+
 This is a project for my undergraduate course on Cryptography. This is very much a work in progress. There's not much in the way of a binary, but you can build with "cargo build" or run the tests I've been setting up with "cargo test". Here are several links to everything I'm using:
 
 https://arxiv.org/pdf/0711.3941.pdf (main resource)
