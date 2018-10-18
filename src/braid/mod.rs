@@ -1,8 +1,11 @@
 pub mod garside;
+pub mod random;
 
-use std::ops::Add;
+use std::ops::Mul;
 use indexmap::set::IndexSet;
 use self::BrGen::*;
+
+type Permutation = Vec<usize>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum BrGen {
@@ -16,10 +19,10 @@ pub struct Braid {
     pub n: usize // Our braid is an element of B_n
 }
 
-impl Add for Braid {
+impl Mul for Braid {
     type Output = Braid;
 
-    fn add(self, other: Braid) -> Braid {
+    fn mul(self, other: Braid) -> Braid {
         debug_assert_eq!(self.n, other.n, "Attempted to compose two different sized vectors!");
 
         let mut new_contents = self.contents.clone();
@@ -44,7 +47,8 @@ fn invert_gens(gens: &mut Vec<BrGen>) {
 }
 
 impl Braid {
-    //http://hackage.haskell.org/package/combinat-0.2.8.2/docs/src/Math-Combinat-Groups-Braid.html
+    // http://hackage.haskell.org/package/combinat-0.2.8.2/docs/src/Math-Combinat-Groups-Braid.html
+    // O(n^2) where n is the length of the permutation
     pub fn from_permutation(perm: Vec<usize>) -> Braid {
         // Assuming that perm is a valid permutation
         let n = perm.len() as usize;
@@ -53,6 +57,7 @@ impl Braid {
         let mut contents: Vec<usize> = Vec::with_capacity(n);
 
         // Pass a reference of cfwdRef each time to doswap
+        // O(1)
         let mut do_swap = |i: usize, cfwd_ref: &mut Vec<usize>| {
             let a = cinv[i - 1];
             let b = cinv[i];
@@ -67,6 +72,7 @@ impl Braid {
 
         let mut phase = 1;
 
+        //O(n^2)
         while phase < n {
             let target = perm[phase - 1];
             let source = cfwd[target - 1];
@@ -92,7 +98,7 @@ impl Braid {
     pub fn from_sigmas(sigmas: Vec<isize>, n:usize) -> Braid {
         let contents = sigmas.iter().map(|s| {
             if *s < 0 {
-                SigmaInv(*s as usize)
+                SigmaInv((*s).abs() as usize)
             } else if *s > 0 {
                 Sigma(*s as usize)
             } else {
@@ -230,17 +236,13 @@ mod tests {
     use super::*;
     #[test]
     fn reduction_tests() {
+        // TODO: Do more tests for reduction
+        // I don't believe it's doing it correctly
         let b = Braid::from_sigmas(vec![1, 2, 3], 3);
         let b2 = b.inverse();
-        let mut b3 = b + b2;
+        let mut b3 = b * b2;
         b3.free_reduce();
-        println!("{:?}", b3);
-    }
-
-    #[test]
-    fn delta_tests() {
-        let d = Braid::make_half_twist(4);
-        println!("{:?}", d);
+        assert!(b3.contents.len() == 0);
     }
 
     #[test]

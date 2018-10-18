@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["torrencem <matt@torrencefamily.net>"]
 
 [dependencies]
-indexmap = "*"
+indexmap = "1.0.1"
+rand = "0.5.5"

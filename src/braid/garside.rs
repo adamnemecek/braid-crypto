@@ -5,8 +5,6 @@ use self::BrGen::*;
 use std::collections::HashSet;
 use std::fmt;
 
-type Permutation = Vec<usize>;
-
 pub struct GarsideForm {
     delta_exp: usize,
     permutations: Vec<Permutation>,
@@ -25,6 +23,7 @@ impl fmt::Display for GarsideForm {
  * Calculate what B_i should be given that sigma_i^-1 = delta_n^-1 B_i
  * and that B_i is a permutation Braid
  * NOTE: This is based on step 1 of Garside Normal Form
+ * O(n^2)
  */
 fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
     let mut my_permutation: Vec<usize> = (1..=n).rev().collect();
@@ -39,25 +38,29 @@ fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
 /**
  * Decompose a braid into a power of delta_n and a positive braid on the right.
  * NOTE: This is based on step 1 and 2 of Garside Normal Form
+ * O(L*n^2 + L^2) where L is the length of b
  */
 fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
     let n = b.n;
     let mut final_vec: Vec<BrGen> = b.contents.clone();
     let mut counter = 0;
     let mut acting_index = 0;
+    // O(Ln^2 + L^2)
     while acting_index < final_vec.len() {
         if let SigmaInv(i) = final_vec[acting_index] {
             // This generator needs to be replaced
-            let mut loc_of_delta = (acting_index - 1) as isize;
+            let mut loc_of_delta = acting_index as isize - 1;
             // remove the "bad" inverse generator
             final_vec.remove(acting_index);
             // replacement = the replacement (minus the delta)
+            // O(n^2)
             let replacement = neg_pow_to_permute(i, n);
             for symb in replacement.contents.iter() {
                 final_vec.insert(acting_index, *symb);
                 acting_index += 1;
             }
             // Now go backwards and replace sigma_a with sigma_{n - a}
+            // O(L) where L is the length of b in terms of generators
             while loc_of_delta != -1 {
                 if let Sigma(a) = final_vec[loc_of_delta as usize] {
                     final_vec[loc_of_delta as usize] = Sigma(n - a);
@@ -80,6 +83,7 @@ fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
  * Break a braid into a series of permutation braids Q_i
  * Choose the longest permutation braids possible.
  * Original algorithm by me
+ * O(L)
  */
 pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     let n = b.n;
@@ -104,6 +108,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     let symbols: Vec<usize> = b.contents.iter().map(sym_to_i).collect();
 
     // The algorithm
+    // O(L)
     while working_index < symbols.len() {
         let swap = symbols[working_index];
         let string1_name = string_pos[swap - 1];
@@ -137,6 +142,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     return res;
 }
 
+// O(L)
 fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Permutation){
     let string_pos = starting;
     // Iterate through each of our generators
@@ -154,9 +160,12 @@ fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Permutation){
 }
 
 impl Braid {
+    // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
     pub fn as_garside_form(&self) -> GarsideForm {
         let n = self.n;
-        let (exponent, braid) = left_slide_delta_form(self);
+        // O(L*n^2 + L^2)
+        let (exponent, braid) = left_slide_delta_form(&self);
+        // O(L)
         let mut bs = break_into_permutations(&braid);
         let mut working_index = 0;
         while working_index < bs.len() - 1 {
@@ -164,8 +173,12 @@ impl Braid {
             let (head, tail) = bs.split_at_mut(working_index + 1); 
             let bi = &mut head[working_index];
             let bi1 = &mut tail[0];
+            // O(L)
             let mut next_starting = bi1.starting_set();
+            // O(L)
             let mut prev_finishing = bi.finishing_set();
+            // O(kL + kn^2) where k is the average runtime until a superset is found (probably small)
+            // If we assume k = L for an upper bound, then this is O(L^2 + Ln^2)
             while !prev_finishing.is_superset(&next_starting) {
                 {
                     let j = next_starting.difference(&prev_finishing).next().unwrap();
@@ -178,13 +191,17 @@ impl Braid {
                     let mut perm: Vec<usize> = (1..=n).collect();
                     perm[*j - 1] = *j + 1;
                     perm[*j] = *j;
+                    // TODO: O(?)
                     braid_to_permutation_with_starting(bi1, &mut perm);
                     // Now, we turn it back into a permutation braid
+                    // O(n^2)
                     let pb = Braid::from_permutation(perm);
                     // and replace bi1 with it
                     bi1.contents = pb.contents.clone();
                 } // For j to go out of scope (j borrows bi1 and bi)
+                // O(L)
                 next_starting = bi1.starting_set();
+                // O(L)
                 prev_finishing = bi.finishing_set();
             }
             working_index += 1;
@@ -192,7 +209,8 @@ impl Braid {
         // Recombine bs
         let mut result: Vec<Permutation> = Vec::new();
         for braid in &mut bs {
-            result.push(braid.as_permutation());
+            let perm = braid.as_permutation();
+            result.push(perm);
         }
         GarsideForm {delta_exp: exponent, permutations: result}
     }
@@ -230,8 +248,7 @@ mod tests {
     #[test]
     fn left_slide_delta_form_tests() {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
-        let contents = vec![Sigma(1), SigmaInv(3), Sigma(2)];
-        let w = Braid {contents: contents, n: 4};
+        let w = Braid::from_sigmas(vec![1, -3, 2], 4);
         let lsdf = left_slide_delta_form(&w);
         assert_eq!(1, lsdf.0);
         let expected = Braid::from_sigmas(vec![3, 3, 2, 1, 3, 2, 2], 4);
@@ -266,7 +283,7 @@ mod tests {
     #[test]
     fn garside_form_tests() {
         // From page 13/14 of Garber
-        let b = Braid {contents: vec![Sigma(1), SigmaInv(3), Sigma(2)], n:4};
+        let b = Braid::from_sigmas(vec![1, -3, 2], 4);
         let gform = b.as_garside_form();
         
         let expected_exp = 1;
