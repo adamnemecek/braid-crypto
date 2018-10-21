@@ -26,7 +26,7 @@ impl fmt::Display for GarsideForm {
  * O(n^2)
  */
 fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
-    let mut my_permutation: Vec<usize> = (1..=n).rev().collect();
+    let mut my_permutation: Permutation = (1..=n).rev().collect();
     // Swap i - 1 with i
     let a = my_permutation[i];
     let b = my_permutation[i - 1];
@@ -54,7 +54,7 @@ fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
             final_vec.remove(acting_index);
             // replacement = the replacement (minus the delta)
             // O(n^2)
-            let replacement = neg_pow_to_permute(i, n);
+            let replacement = neg_pow_to_permute(i as usize, n as usize);
             for symb in replacement.contents.iter() {
                 final_vec.insert(acting_index, *symb);
                 acting_index += 1;
@@ -86,9 +86,9 @@ fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
  * O(L)
  */
 pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
-    let n = b.n;
+    let n = b.n as usize;
     // String at position i is string # string_pos[i - 1]
-    let mut string_pos: Vec<usize> = (1..=n).collect();
+    let mut string_pos: Permutation = (1..=n).collect();
     // String i has crossed String j if has_crossed.contains((i, j)) is true (and i < j)
     let mut has_crossed: HashSet<(usize, usize)> = HashSet::new();
     // Our current index in breaking the original braid
@@ -100,12 +100,12 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     // A helpful function for filtering our original braid into what we need
     let sym_to_i = |sym: &BrGen| {
         if let Sigma(a) = *sym {
-            return a;
+            return a as usize;
         }
         panic!("The given braid was not positive");
     };
 
-    let symbols: Vec<usize> = b.contents.iter().map(sym_to_i).collect();
+    let symbols: Permutation = b.contents.iter().map(sym_to_i).collect();
 
     // The algorithm
     // O(L)
@@ -117,7 +117,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         if has_crossed.contains(&(string1_name, string2_name))
         || has_crossed.contains(&(string2_name, string1_name)) {
             // They have. Let's seperate into a new Q
-            res.push(Braid {contents: tmp_to_add.clone(), n:n});
+            res.push(Braid {contents: tmp_to_add.clone(), n:n as BSize});
             tmp_to_add.clear();
             // Clear the has_crossed set
             has_crossed.clear();
@@ -126,7 +126,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             has_crossed.insert((string1_name, string2_name));
         }
 
-        tmp_to_add.push(Sigma(swap));
+        tmp_to_add.push(Sigma(swap as BSize));
 
         // Update the string_pos with the swap
         string_pos[swap] = string1_name;
@@ -136,7 +136,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     }
 
     if tmp_to_add.len() != 0 {
-        res.push(Braid {contents: tmp_to_add, n:n});
+        res.push(Braid {contents: tmp_to_add, n:n as BSize});
     }
 
     return res;
@@ -148,11 +148,11 @@ fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Permutation){
     // Iterate through each of our generators
     for gen in b.contents.iter() {
         if let Sigma(a) = gen {
-            let sa = string_pos[*a - 1];
-            let sb = string_pos[*a];
+            let sa = string_pos[(*a - 1) as usize];
+            let sb = string_pos[(*a) as usize];
             // swap the strings
-            string_pos[*a] = sa;
-            string_pos[*a - 1] = sb;
+            string_pos[(*a) as usize] = sa;
+            string_pos[(*a - 1) as usize] = sb;
         } else {
             panic!("The braid given was not positive!");
         }
@@ -162,7 +162,7 @@ fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Permutation){
 impl Braid {
     // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
     pub fn as_garside_form(&self) -> GarsideForm {
-        let n = self.n;
+        let n = self.n as usize;
         // O(L*n^2 + L^2)
         let (exponent, braid) = left_slide_delta_form(&self);
         // O(L)
@@ -189,8 +189,8 @@ impl Braid {
                     // We want to put a sigma -j on the beginning, but we want it to stay positive
                     // Instead, let's consider bi1 as a permutation with j and j + 1 switched
                     let mut perm: Vec<usize> = (1..=n).collect();
-                    perm[*j - 1] = *j + 1;
-                    perm[*j] = *j;
+                    perm[(*j - 1) as usize] = (*j + 1) as usize;
+                    perm[(*j) as usize] = (*j) as usize;
                     // TODO: O(?)
                     braid_to_permutation_with_starting(bi1, &mut perm);
                     // Now, we turn it back into a permutation braid
@@ -226,7 +226,7 @@ impl Braid {
     }
 
     pub fn as_permutation(&self) -> Permutation {
-        let mut starting: Permutation = (1..=self.n).collect();
+        let mut starting: Permutation = (1..=self.n as usize).collect();
         braid_to_permutation_with_starting(self, &mut starting);
         starting
     }

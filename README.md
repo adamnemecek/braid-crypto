@@ -5,13 +5,14 @@
 Next things I need to do:
 * Refactor the source (Finish the [golden checklist](https://rust-lang-nursery.github.io/api-guidelines/checklist.html))
 * Add documentation
+* Add integration testing (not just unit testing)
 * Replace the placeholder "hello, world"
-* Add random Braid choice
-* Add serialization (/ deserialization)
+* Add more random Braid choice
+* Add better (more space efficient) serialization
 
-DISCLAIMER: Do not use this library for anything you care about. I make no guarantees of its safety, security, or reliability, nor do I offer any LTS for the API.
+DISCLAIMER: Do not use this library for anything you care about. I make no guarantees of its safety, security, or reliability, nor do I offer any LTS.
 
-This is a project for my undergraduate course on Cryptography. This is very much a work in progress. There's not much in the way of a binary, but you can build with "cargo build" or run the tests I've been setting up with "cargo test". Here are several links to everything I'm using:
+This is a project for my undergraduate course on Cryptography. This is very much a work in progress. There's not much in the way of a binary, but you can build with "cargo build" or run the tests I've been setting up with "cargo test". Here are several links to sources I'm using:
 
 https://arxiv.org/pdf/0711.3941.pdf (main resource)
 
