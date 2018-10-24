@@ -7,7 +7,7 @@ use std::fmt;
 
 pub struct GarsideForm {
     delta_exp: usize,
-    permutations: Vec<Permutation>,
+    permutations: Vec<VecPermutation>,
 }
 
 impl fmt::Display for GarsideForm {
@@ -26,13 +26,10 @@ impl fmt::Display for GarsideForm {
  * O(n^2)
  */
 fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
-    let mut my_permutation: Permutation = (1..=n).rev().collect();
-    // Swap i - 1 with i
-    let a = my_permutation[i];
-    let b = my_permutation[i - 1];
-    my_permutation[i] = b;
-    my_permutation[i - 1] = a;
-    Braid::from_permutation(my_permutation)
+    let mut my_permutation: VecPermutation = (1..=n).rev().collect();
+    // Swap i + 1 with i
+    my_permutation.swap(i + 1, i);
+    Permutation::from_slice(&my_permutation[..])
 }
 
 /**
@@ -88,7 +85,7 @@ fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
 pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     let n = b.n as usize;
     // String at position i is string # string_pos[i - 1]
-    let mut string_pos: Permutation = (1..=n).collect();
+    let mut string_pos: VecPermutation = Permutation::id(n);
     // String i has crossed String j if has_crossed.contains((i, j)) is true (and i < j)
     let mut has_crossed: HashSet<(usize, usize)> = HashSet::new();
     // Our current index in breaking the original braid
@@ -105,7 +102,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         panic!("The given braid was not positive");
     };
 
-    let symbols: Permutation = b.contents.iter().map(sym_to_i).collect();
+    let symbols: Vec<BSize> = b.contents.iter().map(sym_to_i).collect();
 
     // The algorithm
     // O(L)
@@ -129,8 +126,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         tmp_to_add.push(Sigma(swap as BSize));
 
         // Update the string_pos with the swap
-        string_pos[swap] = string1_name;
-        string_pos[swap - 1] = string2_name;
+        string_pos.swap(swap, swap + 1);
 
         working_index += 1;
     }
@@ -142,22 +138,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     return res;
 }
 
-// O(L)
-fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Permutation){
-    let string_pos = starting;
-    // Iterate through each of our generators
-    for gen in b.contents.iter() {
-        if let Sigma(a) = gen {
-            let sa = string_pos[(*a - 1) as usize];
-            let sb = string_pos[(*a) as usize];
-            // swap the strings
-            string_pos[(*a) as usize] = sa;
-            string_pos[(*a - 1) as usize] = sb;
-        } else {
-            panic!("The braid given was not positive!");
-        }
-    }
-}
+
 
 impl Braid {
     // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
@@ -195,7 +176,7 @@ impl Braid {
                     braid_to_permutation_with_starting(bi1, &mut perm);
                     // Now, we turn it back into a permutation braid
                     // O(n^2)
-                    let pb = Braid::from_permutation(perm);
+                    let pb: Braid = Permutation::from_slice(&perm[..]);
                     // and replace bi1 with it
                     bi1.contents = pb.contents.clone();
                 } // For j to go out of scope (j borrows bi1 and bi)
@@ -207,9 +188,9 @@ impl Braid {
             working_index += 1;
         }
         // Recombine bs
-        let mut result: Vec<Permutation> = Vec::new();
+        let mut result: Vec<VecPermutation> = Vec::new();
         for braid in &mut bs {
-            let perm = braid.as_permutation();
+            let perm = braid.as_vec();
             result.push(perm);
         }
         GarsideForm {delta_exp: exponent, permutations: result}
@@ -223,12 +204,6 @@ impl Braid {
             }
         }
         true
-    }
-
-    pub fn as_permutation(&self) -> Permutation {
-        let mut starting: Permutation = (1..=self.n as usize).collect();
-        braid_to_permutation_with_starting(self, &mut starting);
-        starting
     }
 }
 
@@ -263,7 +238,7 @@ mod tests {
         assert_eq!(ps[1].contents, Braid::from_sigmas(vec![2, 1, 2], 3).contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
-        let b = Braid::from_permutation(p);
+        let b: Braid = Permutation::from_slice(&p[..]);
         let old_contents = b.contents.clone();
         let ps = break_into_permutations(&b);
         assert_eq!(ps.len(), 1);
@@ -287,8 +262,8 @@ mod tests {
         let gform = b.as_garside_form();
         
         let expected_exp = 1;
-        let expected_perm1 = Braid::from_sigmas(vec![2, 1, 3, 2, 1], 4).as_permutation();
-        let expected_perm2 = Braid::from_sigmas(vec![1, 2], 4).as_permutation();
+        let expected_perm1 = Braid::from_sigmas(vec![2, 1, 3, 2, 1], 4).as_vec();
+        let expected_perm2 = Braid::from_sigmas(vec![1, 2], 4).as_vec();
 
         assert_eq!(expected_exp, gform.delta_exp);
         assert_eq!(expected_perm1, gform.permutations[0]);

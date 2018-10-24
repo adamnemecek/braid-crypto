@@ -5,10 +5,9 @@ use std::ops::Mul;
 use bincode::{serialize, deserialize};
 use indexmap::set::IndexSet;
 use self::BrGen::*;
+use super::permutation::*;
 
-type BSize = u16;
-
-type Permutation = Vec<usize>;
+type BSize = usize;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BrGen {
@@ -38,30 +37,67 @@ impl Mul for Braid {
     }
 }
 
-fn invert_gens(gens: &mut Vec<BrGen>) {
-    gens.reverse();
-    for gen in gens {
-        let new_gen = match gen {
-            BrGen::Sigma(a) => BrGen::SigmaInv(*a),
-            BrGen::SigmaInv(a) => BrGen::Sigma(*a),
-        };
-        *gen = new_gen;
+
+// O(L)
+fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
+    let string_pos = starting;
+    // Iterate through each of our generators
+    for gen in b.contents.iter() {
+        if let Sigma(a) = gen {
+            string_pos.swap((*a + 1) as usize, *a as usize);
+        } else {
+            panic!("The braid given was not positive!");
+        }
     }
 }
 
-impl Braid {
+impl Permutation for Braid {
+    fn id(n: usize) -> Braid {
+        Braid { n: n as BSize, contents: vec![] }
+    }
+
+    fn size(&self) -> usize {
+        self.n as usize
+    }
+
+    fn swap(&mut self, _a: usize, _b: usize) {
+        panic!("unimplimented")
+    }
+
+    fn follow_starting(&self, x: usize) -> usize {
+        let mut ret = x;
+        for gen in &self.contents {
+            let a = match gen {
+                Sigma(val) => val,
+                SigmaInv(val) => val,
+            };
+            if ret == *a {
+                ret += 1;
+            } else if ret == *a + 1 {
+                ret -= 1;
+            }
+        }
+        ret
+    }
+
+    fn as_vec(&self) -> Vec<usize> {
+        let mut starting: Vec<usize> = (1..=self.n).collect();
+        braid_to_permutation_with_starting(self, &mut starting);
+        starting
+    }
+
     // http://hackage.haskell.org/package/combinat-0.2.8.2/docs/src/Math-Combinat-Groups-Braid.html
     // O(n^2) where n is the length of the permutation
-    pub fn from_permutation(perm: Permutation) -> Braid {
+    fn from_slice(perm: &[usize]) -> Braid {
         // Assuming that perm is a valid permutation
         let n = perm.len();
-        let mut cfwd: Permutation = (1..=n).collect();
-        let mut cinv: Permutation = (1..=n).collect();
+        let mut cfwd: Vec<usize> = (1..=n).collect();
+        let mut cinv: Vec<usize> = (1..=n).collect();
         let mut contents: Vec<BSize> = Vec::with_capacity(n);
 
         // Pass a reference of cfwdRef each time to doswap
         // O(1)
-        let mut do_swap = |i: usize, cfwd_ref: &mut Permutation| {
+        let mut do_swap = |i: usize, cfwd_ref: &mut Vec<usize>| {
             let a = cinv[i - 1];
             let b = cinv[i];
             cinv[i - 1] = b;
@@ -80,7 +116,7 @@ impl Braid {
             let target = perm[(phase - 1) as usize];
             let source = cfwd[(target - 1) as usize];
             // Note that this is immutable
-            let this: Permutation = (phase..source).rev().collect();
+            let this: Vec<usize> = (phase..source).rev().collect();
             for num in this {
                 do_swap(num, &mut cfwd);
                 contents.push(num as BSize);
@@ -90,6 +126,20 @@ impl Braid {
 
         Braid::from_positive_sigmas(contents, n as BSize)
     }
+}
+
+fn invert_gens(gens: &mut Vec<BrGen>) {
+    gens.reverse();
+    for gen in gens {
+        let new_gen = match gen {
+            BrGen::Sigma(a) => BrGen::SigmaInv(*a),
+            BrGen::SigmaInv(a) => BrGen::Sigma(*a),
+        };
+        *gen = new_gen;
+    }
+}
+
+impl Braid {
 
     pub fn from_positive_sigmas(sigmas: Vec<BSize>, n:BSize) -> Braid {
         let contents = sigmas.iter().map(|s| {
@@ -180,7 +230,7 @@ impl Braid {
     pub fn starting_set(&self) -> IndexSet<BSize> {
         let n = self.n as usize;
         let mut res = IndexSet::with_capacity(n);
-        let mut string_pos: Permutation = (1..=n).collect();
+        let mut string_pos: VecPermutation = Permutation::id(n);
         // Iterate through each of our generators
         for gen in self.contents.iter() {
             if let BrGen::Sigma(a) = gen {
@@ -192,8 +242,7 @@ impl Braid {
                     res.insert(sa as BSize);
                 }
                 // swap the strings
-                string_pos[(*a) as usize] = sa;
-                string_pos[(*a - 1) as usize] = sb;
+                string_pos.swap((*a + 1) as usize, (*a) as usize);
             } else {
                 panic!("The braid given was not positive!");
             }
@@ -210,15 +259,12 @@ impl Braid {
     pub fn finishing_set(&self) -> IndexSet<BSize> {
         let n = self.n as usize;
         let mut res = IndexSet::with_capacity(n);
-        let mut string_pos: Permutation = (1..=n).collect();
+        let mut string_pos: VecPermutation = Permutation::id(n);
         // Iterate through each of our generators
         for gen in self.contents.iter() {
             if let BrGen::Sigma(a) = gen {
-                let sa = string_pos[(*a - 1) as usize];
-                let sb = string_pos[(*a) as usize];
                 // swap the strings
-                string_pos[(*a) as usize] = sa;
-                string_pos[(*a - 1) as usize] = sb;
+                string_pos.swap((*a + 1) as usize, (*a) as usize);
             } else {
                 panic!("The braid given was not positive!");
             }
@@ -233,11 +279,11 @@ impl Braid {
         res
     }
 
-    pub fn as_vec(&self) -> Vec<u8> {
+    pub fn as_vec_ser(&self) -> Vec<u8> {
         serialize(&self).unwrap()
     }
 
-    pub fn from_vec(vec: &Vec<u8>) -> Braid {
+    pub fn from_vec_ser(vec: &Vec<u8>) -> Braid {
         deserialize(vec).unwrap()
     }
 }
@@ -260,12 +306,12 @@ mod tests {
     fn permut_tests() {
         // Based off of the Haskell permutationBraid
         let p = vec![3, 4, 1, 2];
-        let b = Braid::from_permutation(p);
+        let b: Braid = Permutation::from_slice(&p[..]);
         let b2 = Braid::from_sigmas(vec![2,1,3,2], 4);
         assert_eq!(b.contents, b2.contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
-        let b = Braid::from_permutation(p);
+        let b: Braid = Permutation::from_slice(&p[..]);
         let b2 = Braid::from_sigmas(vec![2, 6, 5, 4, 3, 5], 7);
         assert_eq!(b.contents, b2.contents);
     }
@@ -294,8 +340,8 @@ mod tests {
         //TODO expand test cases, improve memory usage
         let b = Braid::random_positive(60, 30, 3, 0.3);
         // let b = Braid::from_sigmas(vec![1,2], 3);
-        let as_vec = b.as_vec();
-        let from_vec = Braid::from_vec(&as_vec);
+        let as_vec = b.as_vec_ser();
+        let from_vec = Braid::from_vec_ser(&as_vec);
         let as_string = format!("{:?}", b);
         println!("{:?}", as_vec);
         println!("{:?}", b.contents);

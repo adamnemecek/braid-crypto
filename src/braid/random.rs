@@ -22,8 +22,8 @@ fn make_rng() -> Hc128Rng {
  * complexity is how many "twists" there should be
  * miss rate is the probability of skipping a given twist
  */
-fn random_permutation<CR: CryptoRng + RngCore>(n: usize, complexity: usize, miss_rate: f32, rng: &mut CR) -> Permutation {
-    let mut perm: Permutation = (1..=n).collect();
+fn random_permutation<CR: CryptoRng + RngCore>(n: usize, complexity: usize, miss_rate: f32, rng: &mut CR) -> VecPermutation {
+    let mut perm: VecPermutation = Permutation::id(n);
     for _ in 0..complexity {
         let drawing: f32 = Standard.sample(rng);
         if drawing < miss_rate {
@@ -33,9 +33,7 @@ fn random_permutation<CR: CryptoRng + RngCore>(n: usize, complexity: usize, miss
         // non-uniform distribution
         let to_swap_a = (rng.next_u32() as usize) % n;
         let to_swap_b = (rng.next_u32() as usize) % n;
-        let tmp = perm[to_swap_a];
-        perm[to_swap_a] = perm[to_swap_b];
-        perm[to_swap_b] = tmp;
+        perm.swap(to_swap_a + 1, to_swap_b + 1);
     }
     perm
 }
@@ -47,7 +45,7 @@ impl Braid {
         
         for _ in 0..num_perms {
             let this_permutation = random_permutation(n, complexity, miss_rate, &mut rng);
-            let to_add = Braid::from_permutation(this_permutation);
+            let to_add: Braid = Permutation::from_slice(&this_permutation[..]);
             result = result * to_add;
         }
 

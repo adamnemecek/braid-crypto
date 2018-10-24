@@ -1,4 +1,5 @@
 pub mod braid;
+pub mod permutation;
 
 #[macro_use]
 extern crate serde_derive;
