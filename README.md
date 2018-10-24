@@ -21,7 +21,7 @@ https://core.ac.uk/download/pdf/82700058.pdf
 https://arxiv.org/pdf/math/9712211.pdf
 
 (Also very important:  E. A. Elrifai and H. R. Morton, Algorithms for positive braids, Quart. J. Math. Oxford, 45,
-No. 2 (1994), 479–497.)
+No. 2 (1994))
 
 I also took much inspiration from this package:
 http://hackage.haskell.org/package/combinat-0.2.8.2/docs/Math-Combinat-Groups-Braid.html#v:-61--61-
