@@ -41,7 +41,7 @@ fn random_permutation<CR: CryptoRng + RngCore>(n: usize, complexity: usize, miss
 impl Braid {
     pub fn random_positive(n: usize, num_perms: usize, complexity: usize, miss_rate: f32) -> Braid {
         let mut rng = make_rng();
-        let mut result = Braid::from_sigmas(vec![], n as BSize);
+        let mut result = Braid::from_sigmas(&[], n as BSize);
         
         for _ in 0..num_perms {
             let this_permutation = random_permutation(n, complexity, miss_rate, &mut rng);

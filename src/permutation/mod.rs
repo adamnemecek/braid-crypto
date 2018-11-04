@@ -23,14 +23,14 @@ pub trait Permutation {
     }
 }
 
+// TODO: More tests on this function's correctness
 pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
     let n = v.len();
     // Default implimentation using swap
     let mut res: P = Permutation::id(n);
     let mut reference: VecPermutation = Permutation::id(n);
-    for i in 1..=n {
-        let target = v[i];
-        let place_to = reference.iter().position(|&pos| pos == target)
+    for (i, target) in v.iter().enumerate().take(n) {
+        let place_to = reference.iter().position(|&pos| pos == *target)
                         .expect("A non-permutation slice was passed to from_slice");
         res.swap(i, place_to);
         reference.swap(i, place_to);

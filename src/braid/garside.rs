@@ -52,7 +52,7 @@ fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
             // replacement = the replacement (minus the delta)
             // O(n^2)
             let replacement = neg_pow_to_permute(i as usize, n as usize);
-            for symb in replacement.contents.iter() {
+            for symb in &replacement.contents {
                 final_vec.insert(acting_index, *symb);
                 acting_index += 1;
             }
@@ -131,11 +131,11 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         working_index += 1;
     }
 
-    if tmp_to_add.len() != 0 {
+    if !tmp_to_add.is_empty() {
         res.push(Braid {contents: tmp_to_add, n:n as BSize});
     }
 
-    return res;
+    res
 }
 
 
@@ -215,7 +215,7 @@ mod tests {
     #[test]
     fn neg_pow_to_perm_tests() {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
-        let expected = Braid::from_sigmas(vec![3, 2, 1, 3, 2], 4);
+        let expected = Braid::from_sigmas(&[3, 2, 1, 3, 2], 4);
         let actual = neg_pow_to_permute(3, 4);
         assert_eq!(expected.contents, actual.contents);
     }
@@ -223,19 +223,19 @@ mod tests {
     #[test]
     fn left_slide_delta_form_tests() {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
-        let w = Braid::from_sigmas(vec![1, -3, 2], 4);
+        let w = Braid::from_sigmas(&[1, -3, 2], 4);
         let lsdf = left_slide_delta_form(&w);
         assert_eq!(1, lsdf.0);
-        let expected = Braid::from_sigmas(vec![3, 3, 2, 1, 3, 2, 2], 4);
+        let expected = Braid::from_sigmas(&vec![3, 3, 2, 1, 3, 2, 2], 4);
         assert_eq!(expected.contents, lsdf.1.contents);
     }
 
     #[test]
     fn break_into_permutations_tests() {
-        let b = Braid::from_sigmas(vec![1, 2, 2, 1, 2], 3);
+        let b = Braid::from_sigmas(&[1, 2, 2, 1, 2], 3);
         let ps = break_into_permutations(&b);
-        assert_eq!(ps[0].contents, Braid::from_sigmas(vec![1, 2], 3).contents);
-        assert_eq!(ps[1].contents, Braid::from_sigmas(vec![2, 1, 2], 3).contents);
+        assert_eq!(ps[0].contents, Braid::from_sigmas(&[1, 2], 3).contents);
+        assert_eq!(ps[1].contents, Braid::from_sigmas(&[2, 1, 2], 3).contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
         let b: Braid = Permutation::from_slice(&p[..]);
@@ -248,22 +248,22 @@ mod tests {
     #[test]
     fn is_left_weighted_tests() {
         // From Page 12/13 of Garber
-        assert!(!Braid::from_sigmas(vec![1, 2, 2, 1, 2], 3).is_left_weighted());
-        assert!(Braid::from_sigmas(vec![1, 2, 2, 1], 3).is_left_weighted());
+        assert!(!Braid::from_sigmas(&[1, 2, 2, 1, 2], 3).is_left_weighted());
+        assert!(Braid::from_sigmas(&[1, 2, 2, 1], 3).is_left_weighted());
 
-        assert!(!Braid::from_sigmas(vec![3, 3, 2, 1, 3, 2, 2], 4).is_left_weighted());
-        assert!(Braid::from_sigmas(vec![2, 1, 3, 2, 1, 1, 2], 4).is_left_weighted());
+        assert!(!Braid::from_sigmas(&[3, 3, 2, 1, 3, 2, 2], 4).is_left_weighted());
+        assert!(Braid::from_sigmas(&[2, 1, 3, 2, 1, 1, 2], 4).is_left_weighted());
     }
 
     #[test]
     fn garside_form_tests() {
         // From page 13/14 of Garber
-        let b = Braid::from_sigmas(vec![1, -3, 2], 4);
+        let b = Braid::from_sigmas(&vec![1, -3, 2], 4);
         let gform = b.as_garside_form();
         
         let expected_exp = 1;
-        let expected_perm1 = Braid::from_sigmas(vec![2, 1, 3, 2, 1], 4).as_vec();
-        let expected_perm2 = Braid::from_sigmas(vec![1, 2], 4).as_vec();
+        let expected_perm1 = Braid::from_sigmas(&[2, 1, 3, 2, 1], 4).as_vec();
+        let expected_perm2 = Braid::from_sigmas(&[1, 2], 4).as_vec();
 
         assert_eq!(expected_exp, gform.delta_exp);
         assert_eq!(expected_perm1, gform.permutations[0]);
