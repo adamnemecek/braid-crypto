@@ -31,8 +31,7 @@ impl Mul for Braid {
         let mut new_other_contents = other.contents.clone();
         new_contents.append(&mut new_other_contents);
         
-        let mut ret = Braid { contents: new_contents, n: self.n};
-        ret.free_reduce();
+        let ret = Braid { contents: new_contents, n: self.n};
         ret
     }
 }
@@ -195,39 +194,10 @@ impl Braid {
         }
     }
 
-    pub fn free_reduce_once(&mut self) -> bool {
-        if self.contents.is_empty() {
-            return false; 
-        }
-        let mut changed = false;
-        let mut new_contents = Vec::with_capacity(self.contents.len());
-        let mut i = 0;
-
-        while i < self.contents.len() - 1 {
-            if let (BrGen::Sigma(a), BrGen::SigmaInv(b)) = (self.contents[i], self.contents[i + 1]) {
-                if a == b {
-                    changed = true;
-                    i += 2;
-                    continue;
-                }
-            }
-            new_contents.push(self.contents[i]);
-            i += 1;
-        }
-
-        self.contents = new_contents;
-        changed
-    }
-
-    pub fn free_reduce(&mut self) {
-        while self.free_reduce_once() {}
-    }
-
     /**
      * Find the starting set of a braid. Original algorithm. Assumes
      * this is a positive permutation braid.
-     * ASSUMPTION: i is in the starting set iff strand i and strand i + 1
-     * cross once.
+     * NOTE: See Proposition 2.4 (2) of Elrifai Morton for info
      */
     pub fn starting_set(&self) -> IndexSet<BSize> {
         let n = self.n as usize;
@@ -255,8 +225,6 @@ impl Braid {
     /**
      * Find the finishing set of a braid. Original algorithm. Assumes
      * this is a positive permutation braid.
-     * ASSUMPTION: i is in the finishing set iff the strands which end up at
-     * indices i and i + 1 cross once
      */
     pub fn finishing_set(&self) -> IndexSet<BSize> {
         let n = self.n as usize;
@@ -293,17 +261,6 @@ impl Braid {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn reduction_tests() {
-        // TODO: Do more tests for reduction
-        // I don't believe it's doing it correctly
-        let b = Braid::from_sigmas(&[1, 2, 3], 3);
-        let b2 = b.inverse();
-        let mut b3 = b * b2;
-        b3.free_reduce();
-        assert!(b3.contents.len() == 0);
-    }
-
     #[test]
     fn permut_tests() {
         // Based off of the Haskell permutationBraid

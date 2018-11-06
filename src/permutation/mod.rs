@@ -23,6 +23,25 @@ pub trait Permutation {
     }
 }
 
+pub fn is_identity<P: Permutation>(perm: &P) -> bool {
+    for i in 1..=perm.size() {
+        if perm.follow_starting(i) != i {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn is_twist<P: Permutation>(perm: &P) -> bool {
+    let n = perm.size();
+    for i in 1..=n {
+        if perm.follow_starting(i) != n - i + 1 {
+            return false;
+        }
+    }
+    true
+}
+
 // TODO: More tests on this function's correctness
 pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
     let n = v.len();
@@ -93,6 +112,6 @@ mod tests {
         let mut perm2: VecPermutation = Permutation::id(4);
         perm2.swap(2, 3);
         let composed: VecPermutation = compose(&perm1, &perm2);
-        println!("{:?}", composed);
+        assert_eq!(composed, vec![4, 3, 2, 1]);
     }
 }

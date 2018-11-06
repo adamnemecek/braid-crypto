@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::fmt;
 
 pub struct GarsideForm {
-    delta_exp: usize,
+    delta_exp: isize,
     permutations: Vec<VecPermutation>,
 }
 
@@ -37,7 +37,7 @@ fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
  * NOTE: This is based on step 1 and 2 of Garside Normal Form
  * O(L*n^2 + L^2) where L is the length of b
  */
-fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
+fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
     let n = b.n;
     let mut final_vec: Vec<BrGen> = b.contents.clone();
     let mut counter = 0;
@@ -66,7 +66,7 @@ fn left_slide_delta_form(b: &Braid) -> (usize, Braid) {
                 }
                 loc_of_delta -= 1;
             }
-            counter += 1;
+            counter -= 1;
         } else {
             // Skip this generator and move on the check the next
             acting_index += 1;
@@ -118,6 +118,8 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             tmp_to_add.clear();
             // Clear the has_crossed set
             has_crossed.clear();
+            // New: these strings have still crossed now
+            has_crossed.insert((string1_name, string2_name));
         } else {
             // They have not. Now they have
             has_crossed.insert((string1_name, string2_name));
@@ -150,50 +152,68 @@ impl Braid {
         let mut bs = break_into_permutations(&braid);
         let mut working_index = 0;
         while working_index < bs.len() - 1 {
-            // Split bs to take multiple mutable references
-            let (head, tail) = bs.split_at_mut(working_index + 1); 
-            let bi = &mut head[working_index];
-            let bi1 = &mut tail[0];
-            // O(L)
-            let mut next_starting = bi1.starting_set();
-            // O(L)
-            let mut prev_finishing = bi.finishing_set();
-            // O(kL + kn^2) where k is the average runtime until a superset is found (probably small)
-            // If we assume k = L for an upper bound, then this is O(L^2 + Ln^2)
-            while !prev_finishing.is_superset(&next_starting) {
-                {
-                    let j = next_starting.difference(&prev_finishing).next().unwrap();
-                    // j is in S(B_i+1) but not F(B_i)
-                    // bi is easy, just push a sigma on the end
-                    bi.contents.push(Sigma(*j));
-                    // bi1 is harder.
-                    // We want to put a sigma -j on the beginning, but we want it to stay positive
-                    // Instead, let's consider bi1 as a permutation with j and j + 1 switched
-                    let mut perm: Vec<usize> = (1..=n).collect();
-                    perm[(*j - 1) as usize] = (*j + 1) as usize;
-                    perm[(*j) as usize] = (*j) as usize;
-                    // TODO: O(?)
-                    braid_to_permutation_with_starting(bi1, &mut perm);
-                    // Now, we turn it back into a permutation braid
-                    // O(n^2)
-                    let pb: Braid = Permutation::from_slice(&perm[..]);
-                    // and replace bi1 with it
-                    bi1.contents = pb.contents.clone();
-                } // For j to go out of scope (j borrows bi1 and bi)
+            { // Scope for slices of bs
+                // Split bs to take multiple mutable references
+                let (head, tail) = bs.split_at_mut(working_index + 1); 
+                let bi = &mut head[working_index];
+                let bi1 = &mut tail[0];
                 // O(L)
-                next_starting = bi1.starting_set();
+                let mut next_starting = bi1.starting_set();
                 // O(L)
-                prev_finishing = bi.finishing_set();
+                let mut prev_finishing = bi.finishing_set();
+                // O(kL + kn^2) where k is the average runtime until a superset is found (probably small)
+                // If we assume k = L for an upper bound, then this is O(L^2 + Ln^2)
+                while !prev_finishing.is_superset(&next_starting) {
+                    {
+                        let j = next_starting.difference(&prev_finishing).next().unwrap();
+                        // j is in S(B_i+1) but not F(B_i)
+                        // bi is easy, just push a sigma on the end
+                        bi.contents.push(Sigma(*j));
+                        // bi1 is harder.
+                        // We want to put a sigma -j on the beginning, but we want it to stay positive
+                        // Instead, let's consider bi1 as a permutation with j and j + 1 switched
+                        let mut perm: Vec<usize> = (1..=n).collect();
+                        perm[(*j - 1) as usize] = (*j + 1) as usize;
+                        perm[(*j) as usize] = (*j) as usize;
+                        // TODO: O(?)
+                        braid_to_permutation_with_starting(bi1, &mut perm);
+                        
+                        // Now, we turn it back into a permutation braid
+                        // O(n^2)
+                        let pb: Braid = Permutation::from_slice(&perm[..]);
+                        // and replace bi1 with it
+                        bi1.contents = pb.contents.clone();
+                    } // For j to go out of scope (j borrows bi1 and bi)
+                    // O(L)
+                    next_starting = bi1.starting_set();
+                    // O(L)
+                    prev_finishing = bi.finishing_set();
+                }
+            } // Slices of bs go out of scope
+            if is_identity(&bs[working_index + 1]) {
+                // bi1 is the identity permutation
+                // don't add it
+                bs.remove(working_index + 1);
             }
             working_index += 1;
         }
         // Recombine bs
+        // New: remove intial factors of Delta
+        let mut delta_exp = exponent;
         let mut result: Vec<VecPermutation> = Vec::new();
         for braid in &mut bs {
             let perm = braid.as_vec();
-            result.push(perm);
+            if is_twist(&perm) {
+                delta_exp += 1;
+            } else {
+                result.push(perm);
+            }
         }
-        GarsideForm {delta_exp: exponent, permutations: result}
+
+        
+        
+
+        GarsideForm {delta_exp: delta_exp, permutations: result}
     }
 
     pub fn is_left_weighted(&self) -> bool {
@@ -225,7 +245,7 @@ mod tests {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
         let w = Braid::from_sigmas(&[1, -3, 2], 4);
         let lsdf = left_slide_delta_form(&w);
-        assert_eq!(1, lsdf.0);
+        assert_eq!(-1, lsdf.0);
         let expected = Braid::from_sigmas(&vec![3, 3, 2, 1, 3, 2, 2], 4);
         assert_eq!(expected.contents, lsdf.1.contents);
     }
@@ -246,6 +266,12 @@ mod tests {
     }
 
     #[test]
+    fn new_break_into_permutations_tests() {
+        let a = Braid::from_sigmas(&[2, 2, 2, 2], 3);
+        println!("{:?}", break_into_permutations(&a));
+    }
+
+    #[test]
     fn is_left_weighted_tests() {
         // From Page 12/13 of Garber
         assert!(!Braid::from_sigmas(&[1, 2, 2, 1, 2], 3).is_left_weighted());
@@ -258,10 +284,10 @@ mod tests {
     #[test]
     fn garside_form_tests() {
         // From page 13/14 of Garber
-        let b = Braid::from_sigmas(&vec![1, -3, 2], 4);
+        let b = Braid::from_sigmas(&[1, -3, 2], 4);
         let gform = b.as_garside_form();
         
-        let expected_exp = 1;
+        let expected_exp = -1;
         let expected_perm1 = Braid::from_sigmas(&[2, 1, 3, 2, 1], 4).as_vec();
         let expected_perm2 = Braid::from_sigmas(&[1, 2], 4).as_vec();
 
@@ -269,5 +295,25 @@ mod tests {
         assert_eq!(expected_perm1, gform.permutations[0]);
         assert_eq!(expected_perm2, gform.permutations[1]);
         println!("{}", gform);
+    }
+
+    #[test]
+    fn more_garside_tests() {
+        // To test breaking into permutations
+        let a1 = Braid::from_sigmas(&[2, 1, 2, 1, 2], 3);
+        let a3 = Braid::from_sigmas(&[2, 2, 1, 2, 2], 3);
+
+        assert_eq!(format!("{}", a1.as_garside_form()), format!("{}", a3.as_garside_form()));
+
+        let a1 = Braid::from_sigmas(&[2, 1, 2, 1, 2, 2, 2], 3);
+        let a3 = Braid::from_sigmas(&[2, 2, 1, 2, 2, 2, 2], 3);
+
+        assert_eq!(format!("{}", a1.as_garside_form()), format!("{}", a3.as_garside_form()));
+
+        // To test removing final twists
+        let a1 = Braid::from_sigmas(&[1, 3, -3, 2, 1], 4);
+        let a3 = Braid::from_sigmas(&[2, 1, 2], 4);
+
+        assert_eq!(format!("{}", a1.as_garside_form()), format!("{}", a3.as_garside_form()));
     }
 }
