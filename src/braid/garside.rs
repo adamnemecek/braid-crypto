@@ -143,6 +143,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
 
 
 impl Braid {
+    // TODO: Re-evaluate O() of as_garside form with workingindex -= 1 change
     // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
     pub fn as_garside_form(&self) -> GarsideForm {
         let n = self.n as usize;
