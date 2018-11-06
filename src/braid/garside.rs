@@ -152,6 +152,7 @@ impl Braid {
         let mut bs = break_into_permutations(&braid);
         let mut working_index = 0;
         while working_index < bs.len() - 1 {
+            let mut changed = false;
             { // Scope for slices of bs
                 // Split bs to take multiple mutable references
                 let (head, tail) = bs.split_at_mut(working_index + 1); 
@@ -165,6 +166,7 @@ impl Braid {
                 // If we assume k = L for an upper bound, then this is O(L^2 + Ln^2)
                 while !prev_finishing.is_superset(&next_starting) {
                     {
+                        changed = true;
                         let j = next_starting.difference(&prev_finishing).next().unwrap();
                         // j is in S(B_i+1) but not F(B_i)
                         // bi is easy, just push a sigma on the end
@@ -195,8 +197,14 @@ impl Braid {
                 // don't add it
                 bs.remove(working_index + 1);
             }
-            working_index += 1;
+            if changed && working_index != 0 {
+                // Go back to check if the starting set of this was 
+                working_index -= 1;
+            } else {
+                working_index += 1;
+            }
         }
+
         // Recombine bs
         // New: remove intial factors of Delta
         let mut delta_exp = exponent;
@@ -209,9 +217,6 @@ impl Braid {
                 result.push(perm);
             }
         }
-
-        
-        
 
         GarsideForm {delta_exp: delta_exp, permutations: result}
     }

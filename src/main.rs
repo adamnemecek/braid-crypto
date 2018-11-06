@@ -17,16 +17,13 @@ fn main() {
     println!("computing random braids...");
     let public = Braid::from_sigmas(&[1, 2, 3, 4, 5, 6, 7], 8);
 
-    // let mut s_alice = Braid::random_positive(3, 2, 3, 0.1);
-    // let mut r_bob   = Braid::random_positive(3, 2, 3, 0.1);
+    let mut s_alice = Braid::random_positive(3, 3, 3, 0.1);
+    let mut r_bob   = Braid::random_positive(3, 3, 3, 0.1);
 
-    // s_alice.n = 8;
-    // r_bob.n = 8;
+    s_alice.n = 8;
+    r_bob.n = 8;
 
-    // r_bob.shift();
-
-    let s_alice = Braid::from_sigmas(&[1], 8);
-    let r_bob = Braid::from_sigmas(&[6, 7, 6], 8);
+    r_bob.shift();
 
     println!("computing public messages...");
     let p_prime = s_alice.clone() * public.clone() * s_alice.inverse();
