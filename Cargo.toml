@@ -3,6 +3,12 @@ name = "braid-crypto"
 version = "0.1.0"
 authors = ["torrencem <matt@torrencefamily.net>"]
 
+[lib]
+# Disable tests on lib build: to prevent cargo test
+# from building lib twice
+test = false
+doctest = false
+
 [dependencies]
 indexmap = "1.0.1"
 rand = "0.5.5"

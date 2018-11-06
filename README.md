@@ -3,12 +3,10 @@
 [![Build Status](https://travis-ci.org/Torrencem/braid-crypto.svg?branch=master)](https://travis-ci.org/Torrencem/braid-crypto)
 
 Next things I need to do:
-* Refactor the source (Finish the [golden checklist](https://rust-lang-nursery.github.io/api-guidelines/checklist.html))
+* Optimize Serialization a bit
 * Add documentation
-* Add integration testing (not just unit testing)
-* Replace the placeholder "hello, world"
-* Add more random Braid choice
-* Add better (more space efficient) serialization
+* Add more integration testing (not just unit testing)
+* Fix the mess of lib.rs and main.rs etc.
 
 DISCLAIMER: Do not use this library for anything you care about. I make no guarantees of its safety, security, or reliability, nor do I offer any LTS.
 

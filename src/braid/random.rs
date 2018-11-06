@@ -1,4 +1,5 @@
 
+use rand::Rng;
 use rand::prng::hc128::*;
 use rand::SeedableRng;
 use rand::RngCore;
@@ -29,11 +30,9 @@ fn random_permutation<CR: CryptoRng + RngCore>(n: usize, complexity: usize, miss
         if drawing < miss_rate {
             continue;
         }
-        // TODO: Remove the below %n's, as they give a very slightly
-        // non-uniform distribution
-        let to_swap_a = (rng.next_u32() as usize) % n;
-        let to_swap_b = (rng.next_u32() as usize) % n;
-        perm.swap(to_swap_a + 1, to_swap_b + 1);
+        let to_swap_a = rng.gen_range(1, n+1);
+        let to_swap_b = rng.gen_range(1, n+1);
+        perm.swap(to_swap_a, to_swap_b);
     }
     perm
 }
@@ -51,6 +50,87 @@ impl Braid {
 
         result
     }
+
+    pub fn mutate(&mut self, n: usize) {
+        let mut rng = make_rng();
+        for _ in 0..n {
+            match rng.gen_range(1, 4) {
+                1 => {
+                    self.insert_mutation(&mut rng);
+                },
+                2 => {
+                    self.swap_mutation();
+                },
+                3 => {
+                    self.exchange_mutation();
+                },
+                _ => {}
+            }
+        }
+    }
+
+    pub fn insert_mutation<CR: CryptoRng + RngCore>(&mut self, rng: &mut CR) {
+        let insertion_point = rng.gen_range(0, self.contents.len());
+        let to_insert = rng.gen_range(1, self.n);
+        self.contents.insert(insertion_point, Sigma(to_insert));
+        self.contents.insert(insertion_point + 1, SigmaInv(to_insert));
+    }
+
+    pub fn swap_mutation(&mut self) {
+        let mut last = self.contents[0];
+        for indx in 1..self.contents.len() {
+            let curr = self.contents[indx];
+            match (last, curr) {
+                (Sigma(a), Sigma(b)) => {
+                    if (a as isize - b as isize).abs() > 1 {
+                        let tmp = self.contents[indx].clone();
+                        self.contents[indx] = self.contents[indx - 1];
+                        self.contents[indx - 1] = tmp;
+                    }
+                },
+                (SigmaInv(a), SigmaInv(b)) => {
+                    if (a as isize - b as isize).abs() > 1 {
+                        let tmp = self.contents[indx].clone();
+                        self.contents[indx] = self.contents[indx - 1];
+                        self.contents[indx - 1] = tmp;
+                    }
+                }
+                _ => {}
+            }
+            last = self.contents[indx];
+        }
+    }
+
+    pub fn exchange_mutation(&mut self) {
+        if self.contents.len() < 3 {
+            return;
+        }
+        let mut indx = 0;
+        while indx < self.contents.len() - 2 {
+            let kern1 = self.contents[indx];
+            let kern2 = self.contents[indx + 1];
+            let kern3 = self.contents[indx + 2];
+
+            match (kern1, kern2, kern3) {
+                (Sigma(a), Sigma(b), Sigma(c)) => {
+                    if a == c && b == a + 1 {
+                        self.contents[indx] = Sigma(a + 1);
+                        self.contents[indx + 1] = Sigma(a);
+                        self.contents[indx + 2] = Sigma(a + 1);
+                    }
+                },
+                (SigmaInv(a), SigmaInv(b), SigmaInv(c)) => {
+                    if a == c && b == a + 1 {
+                        self.contents[indx] = SigmaInv(a + 1);
+                        self.contents[indx + 1] = SigmaInv(a);
+                        self.contents[indx + 2] = SigmaInv(a + 1);
+                    }
+                },
+                _ => {},
+            }
+            indx += 1;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -61,5 +141,16 @@ mod tests {
         let b = Braid::random_positive(60, 30, 3, 0.3);
         println!("{:?}", b);
         println!("{}", b.as_garside_form());
+    }
+
+    #[test]
+    fn mutation_tests() {
+        let mut b = Braid::from_sigmas(&[3, 1, 1, 4, 1, 3, 2, 4], 5);
+        b.swap_mutation();
+        println!("{:?}", b);
+
+        let mut c = Braid::from_sigmas(&[1, 2, 1, 2, 3, 4, 3], 5);
+        c.exchange_mutation();
+        println!("{:?}", c);
     }
 }
