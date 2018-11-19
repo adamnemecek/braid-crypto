@@ -102,7 +102,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         panic!("The given braid was not positive");
     };
 
-    let symbols: Vec<BSize> = b.contents.iter().map(sym_to_i).collect();
+    let symbols: Vec<usize> = b.contents.iter().map(sym_to_i).collect();
 
     // The algorithm
     // O(L)
@@ -114,7 +114,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         if has_crossed.contains(&(string1_name, string2_name))
         || has_crossed.contains(&(string2_name, string1_name)) {
             // They have. Let's seperate into a new Q
-            res.push(Braid {contents: tmp_to_add.clone(), n:n as BSize});
+            res.push(Braid {contents: tmp_to_add.clone(), n:n as usize});
             tmp_to_add.clear();
             // Clear the has_crossed set
             has_crossed.clear();
@@ -125,7 +125,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             has_crossed.insert((string1_name, string2_name));
         }
 
-        tmp_to_add.push(Sigma(swap as BSize));
+        tmp_to_add.push(Sigma(swap as usize));
 
         // Update the string_pos with the swap
         string_pos.swap(swap, swap + 1);
@@ -134,7 +134,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     }
 
     if !tmp_to_add.is_empty() {
-        res.push(Braid {contents: tmp_to_add, n:n as BSize});
+        res.push(Braid {contents: tmp_to_add, n:n as usize});
     }
 
     res

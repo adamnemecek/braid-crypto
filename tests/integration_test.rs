@@ -33,26 +33,17 @@ fn test_key_exchange() {
         let p_prime_prime = r_bob.clone() * public.clone() * r_bob.inverse();
 
         println!("computing shared keys...");
-        let k_alice = s_alice.clone() * p_prime_prime.clone() * s_alice.inverse();
-        let k_bob = r_bob.clone() * p_prime.clone() * r_bob.inverse();
-
-        println!("k_alice is length: {}", k_alice.contents.len());
-        println!("s_alice is length: {}", s_alice.contents.len());
+        let k_alice = s_alice.clone() * p_prime_prime * s_alice.inverse();
+        let k_bob = r_bob.clone() * p_prime * r_bob.inverse();
 
         println!("computing reduced form k1...");
         let k1 = k_alice.as_garside_form();
         println!("computing reduced form k2...");
         let k2 = k_bob.as_garside_form();
 
-        println!("results:");
-        println!("{}", k1);
-        println!();
-        println!("{}", k2);
+        println!("results:\n{}\n{}", k1, k2);
 
-        let s1 = format!("{}", k1);
-        let s2 = format!("{}", k2);
-
-        assert_eq!(s1, s2);
+        assert_eq!(k1.to_string(), k2.to_string());
     }
 }
 
@@ -64,4 +55,5 @@ fn test_slides() {
 
     let gform = sum.as_garside_form();
     println!("{}", gform);
+    // outputs: [-1;(4, 3, 1, 2), (2, 3, 1, 4), (3, 1, 4, 2)]
 }

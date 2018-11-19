@@ -7,32 +7,29 @@ use indexmap::set::IndexSet;
 use self::BrGen::*;
 use super::permutation::*;
 
-type BSize = usize;
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BrGen {
-    Sigma(BSize),
-    SigmaInv(BSize)
+    Sigma(usize),
+    SigmaInv(usize)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Braid {
     pub contents: Vec<BrGen>,
-    pub n: BSize // Our braid is an element of B_n
+    pub n: usize // Our braid is an element of B_n
 }
 
 impl Mul for Braid {
     type Output = Braid;
 
     fn mul(self, other: Braid) -> Braid {
-        debug_assert_eq!(self.n, other.n, "Attempted to compose two different sized vectors!");
+        debug_assert_eq!(self.n, other.n, "Attempted to compose two different sized braids!");
 
         let mut new_contents = self.contents.clone();
         let mut new_other_contents = other.contents.clone();
         new_contents.append(&mut new_other_contents);
         
-        let ret = Braid { contents: new_contents, n: self.n};
-        ret
+        Braid { contents: new_contents, n: self.n}
     }
 }
 
@@ -52,7 +49,7 @@ fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
 
 impl Permutation for Braid {
     fn id(n: usize) -> Braid {
-        Braid { n: n as BSize, contents: vec![] }
+        Braid { n: n as usize, contents: vec![] }
     }
 
     fn size(&self) -> usize {
@@ -94,7 +91,7 @@ impl Permutation for Braid {
         let n = perm.len();
         let mut cfwd: Vec<usize> = (1..=n).collect();
         let mut cinv: Vec<usize> = (1..=n).collect();
-        let mut contents: Vec<BSize> = Vec::with_capacity(n);
+        let mut contents: Vec<usize> = Vec::with_capacity(n);
 
         // Pass a reference of cfwdRef each time to doswap
         // O(1)
@@ -120,12 +117,12 @@ impl Permutation for Braid {
             let this: Vec<usize> = (phase..source).rev().collect();
             for num in this {
                 do_swap(num, &mut cfwd);
-                contents.push(num as BSize);
+                contents.push(num as usize);
             }
             phase += 1;
         }
 
-        Braid::from_positive_sigmas(&contents, n as BSize)
+        Braid::from_positive_sigmas(&contents, n as usize)
     }
 }
 
@@ -142,19 +139,19 @@ fn invert_gens(gens: &mut Vec<BrGen>) {
 
 impl Braid {
 
-    pub fn from_positive_sigmas(sigmas: &[BSize], n:BSize) -> Braid {
+    pub fn from_positive_sigmas(sigmas: &[usize], n:usize) -> Braid {
         let contents = sigmas.iter().map(|s| {
             Sigma(*s)
         }).collect();
         Braid {contents, n}
     }
 
-    pub fn from_sigmas(sigmas: &[isize], n:BSize) -> Braid {
+    pub fn from_sigmas(sigmas: &[isize], n:usize) -> Braid {
         let contents = sigmas.iter().map(|s| {
             if *s < 0 {
-                SigmaInv((*s).abs() as BSize)
+                SigmaInv((*s).abs() as usize)
             } else if *s > 0 {
-                Sigma(*s as BSize)
+                Sigma(*s as usize)
             } else {
                 panic!("Invalid s given to from_sigmas")
             }
@@ -162,7 +159,7 @@ impl Braid {
         Braid {contents, n}
     }
 
-    pub fn make_half_twist(n: BSize) -> Braid {
+    pub fn make_half_twist(n: usize) -> Braid {
         // TODO: Use with_capacity
         let mut contents: Vec<BrGen> = Vec::new();
 
@@ -199,7 +196,7 @@ impl Braid {
      * this is a positive permutation braid.
      * NOTE: See Proposition 2.4 (2) of Elrifai Morton for info
      */
-    pub fn starting_set(&self) -> IndexSet<BSize> {
+    pub fn starting_set(&self) -> IndexSet<usize> {
         let n = self.n as usize;
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos: VecPermutation = Permutation::id(n);
@@ -209,9 +206,9 @@ impl Braid {
                 let sa = string_pos[(*a - 1) as usize];
                 let sb = string_pos[(*a) as usize];
                 if sa == sb + 1 {
-                    res.insert(sb as BSize);
+                    res.insert(sb as usize);
                 } else if sb == sa + 1{
-                    res.insert(sa as BSize);
+                    res.insert(sa as usize);
                 }
                 // swap the strings
                 string_pos.swap((*a + 1) as usize, (*a) as usize);
@@ -226,7 +223,7 @@ impl Braid {
      * Find the finishing set of a braid. Original algorithm. Assumes
      * this is a positive permutation braid.
      */
-    pub fn finishing_set(&self) -> IndexSet<BSize> {
+    pub fn finishing_set(&self) -> IndexSet<usize> {
         let n = self.n as usize;
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos: VecPermutation = Permutation::id(n);
@@ -242,7 +239,7 @@ impl Braid {
 
         for i in 1..n {
             if string_pos[i] < string_pos[i - 1] {
-                res.insert(i as BSize);
+                res.insert(i as usize);
             }
         }
 

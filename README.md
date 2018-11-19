@@ -34,3 +34,6 @@ Citation list:
     Birman, Joan, et al. “A New Approach to the Word and Conjugacy Problems in the Braid Groups.” Advances in Mathematics, vol. 139, no. 2, 1998, pp. 322–353., doi:10.1006/aima.1998.1761.
 
     Komuves, Balazs. “HS.” Hackage, a Haskell Package Repository. http://hackage.haskell.org/package/combinat-0.2.8.2/docs/src/Math-Combinat-Groups-Braid.html. Part of the "combinat" haskell library
+
+    E. A. Elrifai and H. R. Morton, Algorithms for positive braids, Quart. J. Math. Oxford, 45,
+    No. 2 (1994)
