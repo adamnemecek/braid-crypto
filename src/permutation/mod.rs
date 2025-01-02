@@ -26,6 +26,19 @@ pub trait Permutation {
         let n = self.size();
         (1..=n).all(|i| self.follow_starting(i) == n - i + 1)
     }
+
+    fn compose<B: Permutation, C: Permutation>(&self, second: &B) -> C {
+        debug_assert_eq!(self.size(), second.size());
+        let n = self.size();
+        let mut res = VecPermutation::id(n);
+        for strand_number in 1..=n {
+            let after_first = self.follow_starting(strand_number);
+            println!("{:?}", after_first);
+            let result_place = second.follow_starting(after_first);
+            res[result_place - 1] = strand_number;
+        }
+        C::from_slice(&res[..])
+    }
 }
 
 // TODO: More tests on this function's correctness
@@ -43,22 +56,6 @@ pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
         reference.swap(i, place_to);
     }
     res
-}
-
-pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(
-    first: &Pa,
-    second: &Pb,
-) -> Pres {
-    debug_assert_eq!(first.size(), second.size());
-    let n = first.size();
-    let mut res = VecPermutation::id(n);
-    for strand_number in 1..=n {
-        let after_first = first.follow_starting(strand_number);
-        println!("{:?}", after_first);
-        let result_place = second.follow_starting(after_first);
-        res[result_place - 1] = strand_number;
-    }
-    Pres::from_slice(&res[..])
 }
 
 impl Permutation for VecPermutation {
@@ -105,7 +102,7 @@ mod tests {
         let perm1: VecPermutation = vec![4, 2, 3, 1];
         let mut perm2 = VecPermutation::id(4);
         perm2.swap(2, 3);
-        let composed: VecPermutation = compose(&perm1, &perm2);
+        let composed: VecPermutation = perm1.compose(&perm2);
         assert_eq!(composed, vec![4, 3, 2, 1]);
     }
 }
