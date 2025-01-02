@@ -88,6 +88,13 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
     )
 }
 
+// A helpful function for filtering our original braid into what we need
+fn sym_to_i(sym: &BrGen) -> usize {
+    let BrGen::Sigma(a) = *sym else {
+        panic!("The given braid was not positive");
+    };
+    a
+}
 /**
  * Break a braid into a series of permutation braids Q_i
  * Choose the longest permutation braids possible.
@@ -104,15 +111,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     let mut working_index = 0;
     // The result we'll return
     let mut res: Vec<Braid> = vec![];
-    let mut tmp_to_add: Vec<BrGen> = vec![];
-
-    // A helpful function for filtering our original braid into what we need
-    let sym_to_i = |sym: &BrGen| {
-        let BrGen::Sigma(a) = *sym else {
-            panic!("The given braid was not positive");
-        };
-        a
-    };
+    let mut contents: Vec<BrGen> = vec![];
 
     let symbols: Vec<usize> = b.contents.iter().map(sym_to_i).collect();
 
@@ -128,10 +127,10 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         {
             // They have. Let's seperate into a new Q
             res.push(Braid {
-                contents: tmp_to_add.clone(),
+                contents: contents.clone(),
                 n,
             });
-            tmp_to_add.clear();
+            contents.clear();
             // Clear the has_crossed set
             has_crossed.clear();
             // New: these strings have still crossed now
@@ -141,7 +140,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             has_crossed.insert((string1_name, string2_name));
         }
 
-        tmp_to_add.push(BrGen::Sigma(swap));
+        contents.push(BrGen::Sigma(swap));
 
         // Update the string_pos with the swap
         string_pos.swap(swap, swap + 1);
@@ -149,11 +148,8 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         working_index += 1;
     }
 
-    if !tmp_to_add.is_empty() {
-        res.push(Braid {
-            contents: tmp_to_add,
-            n,
-        });
+    if !contents.is_empty() {
+        res.push(Braid { contents, n });
     }
 
     res
