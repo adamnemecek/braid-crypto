@@ -82,62 +82,61 @@ impl Braid {
     }
 
     pub fn insert_mutation<CR: CryptoRng + RngCore>(&mut self, rng: &mut CR) {
-        let insertion_point = rng.gen_range(0, self.contents.len());
+        let insertion_point = rng.gen_range(0, self.gens.len());
         let to_insert = rng.gen_range(1, self.n);
-        self.contents
-            .insert(insertion_point, BrGen::Sigma(to_insert));
-        self.contents
+        self.gens.insert(insertion_point, BrGen::Sigma(to_insert));
+        self.gens
             .insert(insertion_point + 1, BrGen::SigmaInv(to_insert));
     }
 
     pub fn swap_mutation(&mut self) {
-        let mut last = self.contents[0];
-        for indx in 1..self.contents.len() {
-            let curr = self.contents[indx];
+        let mut last = self.gens[0];
+        for indx in 1..self.gens.len() {
+            let curr = self.gens[indx];
             match (last, curr) {
                 (BrGen::Sigma(a), BrGen::Sigma(b)) => {
                     if (a as isize - b as isize).abs() > 1 {
-                        let tmp = self.contents[indx].clone();
-                        self.contents[indx] = self.contents[indx - 1];
-                        self.contents[indx - 1] = tmp;
+                        let tmp = self.gens[indx].clone();
+                        self.gens[indx] = self.gens[indx - 1];
+                        self.gens[indx - 1] = tmp;
                     }
                 }
                 (BrGen::SigmaInv(a), BrGen::SigmaInv(b)) => {
                     if (a as isize - b as isize).abs() > 1 {
-                        let tmp = self.contents[indx].clone();
-                        self.contents[indx] = self.contents[indx - 1];
-                        self.contents[indx - 1] = tmp;
+                        let tmp = self.gens[indx].clone();
+                        self.gens[indx] = self.gens[indx - 1];
+                        self.gens[indx - 1] = tmp;
                     }
                 }
                 _ => {}
             }
-            last = self.contents[indx];
+            last = self.gens[indx];
         }
     }
 
     pub fn exchange_mutation(&mut self) {
-        if self.contents.len() < 3 {
+        if self.gens.len() < 3 {
             return;
         }
         let mut indx = 0;
-        while indx < self.contents.len() - 2 {
-            let kern1 = self.contents[indx];
-            let kern2 = self.contents[indx + 1];
-            let kern3 = self.contents[indx + 2];
+        while indx < self.gens.len() - 2 {
+            let kern1 = self.gens[indx];
+            let kern2 = self.gens[indx + 1];
+            let kern3 = self.gens[indx + 2];
 
             match (kern1, kern2, kern3) {
                 (BrGen::Sigma(a), BrGen::Sigma(b), BrGen::Sigma(c)) => {
                     if a == c && b == a + 1 {
-                        self.contents[indx] = BrGen::Sigma(a + 1);
-                        self.contents[indx + 1] = BrGen::Sigma(a);
-                        self.contents[indx + 2] = BrGen::Sigma(a + 1);
+                        self.gens[indx] = BrGen::Sigma(a + 1);
+                        self.gens[indx + 1] = BrGen::Sigma(a);
+                        self.gens[indx + 2] = BrGen::Sigma(a + 1);
                     }
                 }
                 (BrGen::SigmaInv(a), BrGen::SigmaInv(b), BrGen::SigmaInv(c)) => {
                     if a == c && b == a + 1 {
-                        self.contents[indx] = BrGen::SigmaInv(a + 1);
-                        self.contents[indx + 1] = BrGen::SigmaInv(a);
-                        self.contents[indx + 2] = BrGen::SigmaInv(a + 1);
+                        self.gens[indx] = BrGen::SigmaInv(a + 1);
+                        self.gens[indx + 1] = BrGen::SigmaInv(a);
+                        self.gens[indx + 2] = BrGen::SigmaInv(a + 1);
                     }
                 }
                 _ => {}

@@ -29,8 +29,8 @@ fn main() {
     let k_alice = s_alice.clone() * p_prime_prime.clone() * s_alice.inverse();
     let k_bob = r_bob.clone() * p_prime.clone() * r_bob.inverse();
 
-    println!("k_alice is length: {}", k_alice.contents.len());
-    println!("s_alice is length: {}", s_alice.contents.len());
+    println!("k_alice is length: {}", k_alice.gens.len());
+    println!("s_alice is length: {}", s_alice.gens.len());
 
     println!("computing reduced form k1...");
     let k1 = k_alice.as_garside_form();

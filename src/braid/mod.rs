@@ -33,11 +33,18 @@ impl BrGen {
             Self::SigmaInv(i) => Self::SigmaInv(n - i),
         }
     }
+
+    pub fn apply(&self, v: &mut Vec<usize>) {
+        let BrGen::Sigma(a) = self else {
+            panic!("The braid given was not positive!");
+        };
+        v.swap_(*a + 1, *a);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Braid {
-    pub contents: Vec<BrGen>,
+    pub gens: Vec<BrGen>,
     // Our braid is an element of B_n
     pub n: usize,
 }
@@ -52,7 +59,7 @@ impl std::ops::Mul for Braid {
         );
 
         Self {
-            contents: self.iter().chain(other.iter()).cloned().collect(),
+            gens: self.iter().chain(other.iter()).cloned().collect(),
             n: self.n,
         }
     }
@@ -60,18 +67,13 @@ impl std::ops::Mul for Braid {
 
 impl Braid {
     // O(L)
-    pub fn braid_to_permutation_with_starting(&self, starting: &mut Vec<usize>) {
-        let string_pos = starting;
+    pub fn braid_to_permutation_with_starting(&self, v: &mut Vec<usize>) {
         // Iterate through each of our generators
-        for g in &self.contents {
-            let BrGen::Sigma(a) = g else {
-                panic!("The braid given was not positive!");
-            };
-            string_pos.swap_(*a + 1, *a);
+        for g in self.iter() {
+            g.apply(v);
         }
     }
 }
-
 #[inline]
 fn do_swap(fwd: &mut Vec<usize>, inv: &mut Vec<usize>, i: usize) {
     // Swap elements in inv
@@ -83,10 +85,7 @@ fn do_swap(fwd: &mut Vec<usize>, inv: &mut Vec<usize>, i: usize) {
 
 impl Permutation for Braid {
     fn id(n: usize) -> Self {
-        Self {
-            n,
-            contents: vec![],
-        }
+        Self { n, gens: vec![] }
     }
 
     fn size(&self) -> usize {
@@ -99,7 +98,7 @@ impl Permutation for Braid {
 
     fn position(&self, x: usize) -> usize {
         let mut ret = x;
-        for g in &self.contents {
+        for g in &self.gens {
             let a = *match g {
                 BrGen::Sigma(val) | BrGen::SigmaInv(val) => val,
             };
@@ -127,7 +126,7 @@ impl Permutation for Braid {
         let n = perm.len();
         let mut cfwd: Vec<_> = (1..=n).collect();
         let mut cinv: Vec<_> = cfwd.clone();
-        let mut contents = Vec::with_capacity(n);
+        let mut gens = Vec::with_capacity(n);
 
         // Pass a reference of cfwdRef each time to doswap
         // O(1)
@@ -141,23 +140,23 @@ impl Permutation for Braid {
             // Note that this is immutable
             for num in (phase..source).rev() {
                 do_swap(&mut cfwd, &mut cinv, num);
-                contents.push(num);
+                gens.push(num);
             }
             phase += 1;
         }
 
-        Self::from_positive_sigmas(&contents, n)
+        Self::from_positive_sigmas(&gens, n)
     }
 }
 
 impl Braid {
     pub fn from_positive_sigmas(sigmas: &[usize], n: usize) -> Self {
-        let contents = sigmas.iter().map(|s| BrGen::Sigma(*s)).collect();
-        Self { contents, n }
+        let gens = sigmas.iter().map(|s| BrGen::Sigma(*s)).collect();
+        Self { gens, n }
     }
 
     pub fn from_sigmas(sigmas: &[isize], n: usize) -> Self {
-        let contents = sigmas
+        let gens = sigmas
             .iter()
             .cloned()
             .map(|s| match s {
@@ -166,29 +165,29 @@ impl Braid {
                 1.. => BrGen::Sigma(s as _),
             })
             .collect();
-        Self { contents, n }
+        Self { gens, n }
     }
 
     pub fn make_half_twist(n: usize) -> Self {
         // TODO: Use with_capacity
-        let contents = (1..n + 1)
+        let gens = (1..n + 1)
             .rev()
             .flat_map(|k| (1..k).map(BrGen::Sigma))
             .collect();
 
-        Self { contents, n }
+        Self { gens, n }
     }
 
     pub fn iter(&self) -> std::slice::Iter<'_, BrGen> {
-        self.contents.iter()
+        self.gens.iter()
     }
 
     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, BrGen> {
-        self.contents.iter_mut()
+        self.gens.iter_mut()
     }
 
     pub fn invert(&mut self) {
-        self.contents.reverse();
+        self.gens.reverse();
         for g in self.iter_mut() {
             *g = g.inverse();
         }
@@ -201,7 +200,7 @@ impl Braid {
     }
 
     pub fn shift(&mut self) {
-        for g in &mut self.contents {
+        for g in &mut self.gens {
             *g = g.shift(self.n);
         }
     }
@@ -216,7 +215,7 @@ impl Braid {
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
-        for g in &self.contents {
+        for g in &self.gens {
             let BrGen::Sigma(a) = g else {
                 panic!("The braid given was not positive!");
             };
@@ -242,7 +241,7 @@ impl Braid {
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
-        for g in &self.contents {
+        for g in &self.gens {
             let BrGen::Sigma(a) = g else {
                 // swap the strings
                 panic!("The braid given was not positive!");
@@ -278,12 +277,12 @@ mod tests {
         let p = vec![3, 4, 1, 2];
         let b = Braid::from_slice(&p[..]);
         let b2 = Braid::from_sigmas(&[2, 1, 3, 2], 4);
-        assert_eq!(b.contents, b2.contents);
+        assert_eq!(b.gens, b2.gens);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
         let b = Braid::from_slice(&p[..]);
         let b2 = Braid::from_sigmas(&[2, 6, 5, 4, 3, 5], 7);
-        assert_eq!(b.contents, b2.contents);
+        assert_eq!(b.gens, b2.gens);
     }
 
     #[test]
@@ -314,7 +313,7 @@ mod tests {
         let from_vec = Braid::from_vec_ser(&as_vec);
         let as_string = format!("{:?}", b);
         println!("{:?}", as_vec);
-        println!("{:?}", b.contents);
+        println!("{:?}", b.gens);
         println!("as_string: {}, as_vec: {}", as_string.len(), as_vec.len());
         assert_eq!(b, from_vec);
     }

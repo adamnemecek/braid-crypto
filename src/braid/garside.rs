@@ -47,30 +47,30 @@ impl Braid {
      */
     pub fn left_slide_delta_form(&self) -> (isize, Self) {
         let n = self.n;
-        let mut contents = self.contents.clone();
+        let mut gens = self.gens.clone();
         let mut counter = 0;
         let mut acting_index = 0;
         // O(Ln^2 + L^2)
-        while acting_index < contents.len() {
-            if let BrGen::SigmaInv(i) = contents[acting_index] {
+        while acting_index < gens.len() {
+            if let BrGen::SigmaInv(i) = gens[acting_index] {
                 // This generator needs to be replaced
                 let mut loc_of_delta = acting_index as isize - 1;
                 // remove the "bad" inverse generator
-                contents.remove(acting_index);
+                gens.remove(acting_index);
                 // replacement = the replacement (minus the delta)
                 // O(n^2)
                 let replacement = Braid::neg_pow_to_permute(i, n);
-                for symb in &replacement.contents {
-                    contents.insert(acting_index, *symb);
+                for symb in &replacement.gens {
+                    gens.insert(acting_index, *symb);
                     acting_index += 1;
                 }
                 // Now go backwards and replace sigma_a with sigma_{n - a}
                 // O(L) where L is the length of b in terms of generators
                 while loc_of_delta != -1 {
-                    let BrGen::Sigma(a) = contents[loc_of_delta as usize] else {
+                    let BrGen::Sigma(a) = gens[loc_of_delta as usize] else {
                         panic!("There was a negative sigma?");
                     };
-                    contents[loc_of_delta as usize] = BrGen::Sigma(n - a);
+                    gens[loc_of_delta as usize] = BrGen::Sigma(n - a);
                     loc_of_delta -= 1;
                 }
                 counter -= 1;
@@ -80,13 +80,7 @@ impl Braid {
             }
         }
 
-        (
-            counter,
-            Self {
-                contents,
-                n: self.n,
-            },
-        )
+        (counter, Self { gens, n: self.n })
     }
 }
 
@@ -117,7 +111,7 @@ impl Braid {
         let mut working_index = 0;
         // The result we'll return
         let mut res: Vec<Self> = vec![];
-        let mut contents: Vec<BrGen> = vec![];
+        let mut gens: Vec<BrGen> = vec![];
 
         let symbols: Vec<usize> = self.iter().map(BrGen::sym_to_i).collect();
 
@@ -133,10 +127,10 @@ impl Braid {
             {
                 // They have. Let's seperate into a new Q
                 res.push(Self {
-                    contents: contents.clone(),
+                    gens: gens.clone(),
                     n,
                 });
-                contents.clear();
+                gens.clear();
                 // Clear the has_crossed set
                 has_crossed.clear();
                 // New: these strings have still crossed now
@@ -146,7 +140,7 @@ impl Braid {
                 has_crossed.insert((string1_name, string2_name));
             }
 
-            contents.push(BrGen::Sigma(swap));
+            gens.push(BrGen::Sigma(swap));
 
             // Update the string_pos with the swap
             string_pos.swap_(swap, swap + 1);
@@ -154,8 +148,8 @@ impl Braid {
             working_index += 1;
         }
 
-        if !contents.is_empty() {
-            res.push(Self { contents, n });
+        if !gens.is_empty() {
+            res.push(Self { gens, n });
         }
 
         res
@@ -190,7 +184,7 @@ impl Braid {
                         let j = next_starting.difference(&prev_finishing).next().unwrap();
                         // j is in S(B_i+1) but not F(B_i)
                         // bi is easy, just push a sigma on the end
-                        bi.contents.push(BrGen::Sigma(*j));
+                        bi.gens.push(BrGen::Sigma(*j));
                         // bi1 is harder.
                         // We want to put a sigma -j on the beginning, but we want it to stay positive
                         // Instead, let's consider bi1 as a permutation with j and j + 1 switched
@@ -204,7 +198,7 @@ impl Braid {
                         // O(n^2)
                         let pb = Braid::from_slice(&perm[..]);
                         // and replace bi1 with it
-                        bi1.contents = pb.contents.clone();
+                        bi1.gens = pb.gens.clone();
                     } // For j to go out of scope (j borrows bi1 and bi)
                       // O(L)
                     next_starting = bi1.starting_set();
@@ -263,7 +257,7 @@ mod tests {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
         let expected = Braid::from_sigmas(&[3, 2, 1, 3, 2], 4);
         let actual = Braid::neg_pow_to_permute(3, 4);
-        assert_eq!(expected.contents, actual.contents);
+        assert_eq!(expected.gens, actual.gens);
     }
 
     #[test]
@@ -273,22 +267,22 @@ mod tests {
         let lsdf = w.left_slide_delta_form();
         assert_eq!(-1, lsdf.0);
         let expected = Braid::from_sigmas(&vec![3, 3, 2, 1, 3, 2, 2], 4);
-        assert_eq!(expected.contents, lsdf.1.contents);
+        assert_eq!(expected.gens, lsdf.1.gens);
     }
 
     #[test]
     fn break_into_permutations_tests() {
         let b = Braid::from_sigmas(&[1, 2, 2, 1, 2], 3);
         let ps = b.break_into_permutations();
-        assert_eq!(ps[0].contents, Braid::from_sigmas(&[1, 2], 3).contents);
-        assert_eq!(ps[1].contents, Braid::from_sigmas(&[2, 1, 2], 3).contents);
+        assert_eq!(ps[0].gens, Braid::from_sigmas(&[1, 2], 3).gens);
+        assert_eq!(ps[1].gens, Braid::from_sigmas(&[2, 1, 2], 3).gens);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
         let b = Braid::from_slice(&p[..]);
-        let old_contents = b.contents.clone();
+        let old_gens = b.gens.clone();
         let ps = b.break_into_permutations();
         assert_eq!(ps.len(), 1);
-        assert_eq!(ps[0].contents, old_contents);
+        assert_eq!(ps[0].gens, old_gens);
     }
 
     #[test]
