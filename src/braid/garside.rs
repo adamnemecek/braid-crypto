@@ -58,7 +58,7 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
             final_vec.remove(acting_index);
             // replacement = the replacement (minus the delta)
             // O(n^2)
-            let replacement = neg_pow_to_permute(i as usize, n as usize);
+            let replacement = neg_pow_to_permute(i, n);
             for symb in &replacement.contents {
                 final_vec.insert(acting_index, *symb);
                 acting_index += 1;
@@ -96,11 +96,11 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
  * O(L)
  */
 pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
-    let n = b.n as usize;
+    let n = b.n;
     // String at position i is string # string_pos[i - 1]
     let mut string_pos = VecPermutation::id(n);
     // String i has crossed String j if has_crossed.contains((i, j)) is true (and i < j)
-    let mut has_crossed: HashSet<(usize, usize)> = HashSet::new();
+    let mut has_crossed = HashSet::<(usize, usize)>::new();
     // Our current index in breaking the original braid
     let mut working_index = 0;
     // The result we'll return
@@ -110,7 +110,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     // A helpful function for filtering our original braid into what we need
     let sym_to_i = |sym: &BrGen| {
         if let BrGen::Sigma(a) = *sym {
-            return a as usize;
+            return a;
         }
         panic!("The given braid was not positive");
     };
@@ -130,7 +130,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             // They have. Let's seperate into a new Q
             res.push(Braid {
                 contents: tmp_to_add.clone(),
-                n: n as usize,
+                n,
             });
             tmp_to_add.clear();
             // Clear the has_crossed set
@@ -142,7 +142,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             has_crossed.insert((string1_name, string2_name));
         }
 
-        tmp_to_add.push(BrGen::Sigma(swap as usize));
+        tmp_to_add.push(BrGen::Sigma(swap));
 
         // Update the string_pos with the swap
         string_pos.swap(swap, swap + 1);
@@ -153,7 +153,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     if !tmp_to_add.is_empty() {
         res.push(Braid {
             contents: tmp_to_add,
-            n: n as usize,
+            n,
         });
     }
 
@@ -164,7 +164,7 @@ impl Braid {
     // TODO: Re-evaluate O() of as_garside form with workingindex -= 1 change
     // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
     pub fn as_garside_form(&self) -> GarsideForm {
-        let n = self.n as usize;
+        let n = self.n;
         // O(L*n^2 + L^2)
         let (exponent, braid) = left_slide_delta_form(&self);
         // O(L)
@@ -195,8 +195,8 @@ impl Braid {
                         // We want to put a sigma -j on the beginning, but we want it to stay positive
                         // Instead, let's consider bi1 as a permutation with j and j + 1 switched
                         let mut perm: Vec<usize> = (1..=n).collect();
-                        perm[(*j - 1) as usize] = (*j + 1) as usize;
-                        perm[(*j) as usize] = (*j) as usize;
+                        perm[*j - 1] = *j + 1;
+                        perm[*j] = *j;
                         // TODO: O(?)
                         braid_to_permutation_with_starting(bi1, &mut perm);
 

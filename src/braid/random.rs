@@ -52,7 +52,7 @@ fn random_permutation<CR: CryptoRng + RngCore>(
 impl Braid {
     pub fn random_positive(n: usize, num_perms: usize, complexity: usize, miss_rate: f32) -> Self {
         let mut rng = make_rng();
-        let mut result = Self::from_sigmas(&[], n as usize);
+        let mut result = Self::from_sigmas(&[], n);
 
         for _ in 0..num_perms {
             let this_permutation = random_permutation(n, complexity, miss_rate, &mut rng);

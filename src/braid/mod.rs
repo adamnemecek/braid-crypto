@@ -51,7 +51,7 @@ pub fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) 
     // Iterate through each of our generators
     for g in &b.contents {
         if let BrGen::Sigma(a) = g {
-            string_pos.swap((*a + 1) as usize, *a as usize);
+            string_pos.swap(*a + 1, *a);
         } else {
             panic!("The braid given was not positive!");
         }
@@ -61,7 +61,7 @@ pub fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) 
 impl Permutation for Braid {
     fn id(n: usize) -> Self {
         Self {
-            n: n as usize,
+            n,
             contents: vec![],
         }
     }
@@ -125,18 +125,18 @@ impl Permutation for Braid {
 
         //O(n^2)
         while phase < n {
-            let target = perm[(phase - 1) as usize];
-            let source = cfwd[(target - 1) as usize];
+            let target = perm[phase - 1];
+            let source = cfwd[target - 1];
             // Note that this is immutable
             let this: Vec<usize> = (phase..source).rev().collect();
             for num in this {
                 do_swap(num, &mut cfwd);
-                contents.push(num as usize);
+                contents.push(num);
             }
             phase += 1;
         }
 
-        Self::from_positive_sigmas(&contents, n as usize)
+        Self::from_positive_sigmas(&contents, n)
     }
 }
 
@@ -211,21 +211,21 @@ impl Braid {
      * NOTE: See Proposition 2.4 (2) of Elrifai Morton for info
      */
     pub fn starting_set(&self) -> IndexSet<usize> {
-        let n = self.n as usize;
+        let n = self.n;
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.contents {
             if let BrGen::Sigma(a) = g {
-                let sa = string_pos[(*a - 1) as usize];
-                let sb = string_pos[(*a) as usize];
+                let sa = string_pos[*a - 1];
+                let sb = string_pos[*a];
                 if sa == sb + 1 {
-                    res.insert(sb as usize);
+                    res.insert(sb);
                 } else if sb == sa + 1 {
-                    res.insert(sa as usize);
+                    res.insert(sa);
                 }
                 // swap the strings
-                string_pos.swap((*a + 1) as usize, (*a) as usize);
+                string_pos.swap(*a + 1, *a);
             } else {
                 panic!("The braid given was not positive!");
             }
@@ -238,14 +238,14 @@ impl Braid {
      * this is a positive permutation braid.
      */
     pub fn finishing_set(&self) -> IndexSet<usize> {
-        let n = self.n as usize;
+        let n = self.n;
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.contents {
             if let BrGen::Sigma(a) = g {
                 // swap the strings
-                string_pos.swap((*a + 1) as usize, (*a) as usize);
+                string_pos.swap(*a + 1, *a);
             } else {
                 panic!("The braid given was not positive!");
             }
@@ -253,7 +253,7 @@ impl Braid {
 
         for i in 1..n {
             if string_pos[i] < string_pos[i - 1] {
-                res.insert(i as usize);
+                res.insert(i);
             }
         }
 
