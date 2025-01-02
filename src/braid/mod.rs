@@ -72,16 +72,13 @@ impl Braid {
     }
 }
 
+#[inline]
 fn do_swap(fwd: &mut Vec<usize>, inv: &mut Vec<usize>, i: usize) {
-    let a = inv[i - 1];
-    let b = inv[i];
-    inv[i - 1] = b;
-    inv[i] = a;
+    // Swap elements in inv
+    inv.swap(i - 1, i);
 
-    let u = fwd[a - 1];
-    let v = fwd[b - 1];
-    fwd[a - 1] = v;
-    fwd[b - 1] = u;
+    // Swap elements in fwd, adjust for 1-based index
+    fwd.swap(inv[i - 1] - 1, inv[i] - 1);
 }
 
 impl Permutation for Braid {
