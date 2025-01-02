@@ -50,13 +50,13 @@ fn random_permutation<CR: CryptoRng + RngCore>(
 }
 
 impl Braid {
-    pub fn random_positive(n: usize, num_perms: usize, complexity: usize, miss_rate: f32) -> Braid {
+    pub fn random_positive(n: usize, num_perms: usize, complexity: usize, miss_rate: f32) -> Self {
         let mut rng = make_rng();
-        let mut result = Braid::from_sigmas(&[], n as usize);
+        let mut result = Self::from_sigmas(&[], n as usize);
 
         for _ in 0..num_perms {
             let this_permutation = random_permutation(n, complexity, miss_rate, &mut rng);
-            let to_add: Braid = Permutation::from_slice(&this_permutation[..]);
+            let to_add: Self = Permutation::from_slice(&this_permutation[..]);
             result = result * to_add;
         }
 

@@ -27,20 +27,20 @@ pub struct Braid {
 }
 
 impl Mul for Braid {
-    type Output = Braid;
+    type Output = Self;
 
-    fn mul(self, other: Braid) -> Braid {
+    fn mul(self, other: Self) -> Self {
         debug_assert_eq!(
             self.n, other.n,
             "Attempted to compose two different sized braids!"
         );
 
-        let mut new_contents = self.contents.clone();
+        let mut contents = self.contents.clone();
         let mut new_other_contents = other.contents.clone();
-        new_contents.append(&mut new_other_contents);
+        contents.append(&mut new_other_contents);
 
-        Braid {
-            contents: new_contents,
+        Self {
+            contents,
             n: self.n,
         }
     }
@@ -60,8 +60,8 @@ pub fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) 
 }
 
 impl Permutation for Braid {
-    fn id(n: usize) -> Braid {
-        Braid {
+    fn id(n: usize) -> Self {
+        Self {
             n: n as usize,
             contents: vec![],
         }
@@ -101,7 +101,7 @@ impl Permutation for Braid {
     // O(n^2) where n is the length of the permutation
     // Allow many single char names since it's directly adapted from the Haskell source
     #[allow(many_single_char_names)]
-    fn from_slice(perm: &[usize]) -> Braid {
+    fn from_slice(perm: &[usize]) -> Self {
         // Assuming that perm is a valid permutation
         let n = perm.len();
         let mut cfwd: Vec<usize> = (1..=n).collect();
@@ -137,7 +137,7 @@ impl Permutation for Braid {
             phase += 1;
         }
 
-        Braid::from_positive_sigmas(&contents, n as usize)
+        Self::from_positive_sigmas(&contents, n as usize)
     }
 }
 
@@ -153,12 +153,12 @@ fn invert_gens(gens: &mut Vec<BrGen>) {
 }
 
 impl Braid {
-    pub fn from_positive_sigmas(sigmas: &[usize], n: usize) -> Braid {
+    pub fn from_positive_sigmas(sigmas: &[usize], n: usize) -> Self {
         let contents = sigmas.iter().map(|s| BrGen::Sigma(*s)).collect();
-        Braid { contents, n }
+        Self { contents, n }
     }
 
-    pub fn from_sigmas(sigmas: &[isize], n: usize) -> Braid {
+    pub fn from_sigmas(sigmas: &[isize], n: usize) -> Self {
         let contents = sigmas
             .iter()
             .map(|s| {
@@ -171,10 +171,10 @@ impl Braid {
                 }
             })
             .collect();
-        Braid { contents, n }
+        Self { contents, n }
     }
 
-    pub fn make_half_twist(n: usize) -> Braid {
+    pub fn make_half_twist(n: usize) -> Self {
         // TODO: Use with_capacity
         let mut contents: Vec<BrGen> = Vec::new();
 
@@ -184,18 +184,18 @@ impl Braid {
             }
         }
 
-        Braid { contents, n }
+        Self { contents, n }
     }
 
     pub fn invert(&mut self) {
         invert_gens(&mut self.contents);
     }
 
-    pub fn inverse(&self) -> Braid {
-        let mut new_contents = self.contents.clone();
-        invert_gens(&mut new_contents);
-        Braid {
-            contents: new_contents,
+    pub fn inverse(&self) -> Self {
+        let mut contents = self.contents.clone();
+        invert_gens(&mut contents);
+        Self {
+            contents,
             n: self.n,
         }
     }
@@ -205,7 +205,7 @@ impl Braid {
             *g = match g {
                 BrGen::Sigma(i) => BrGen::Sigma(self.n - *i),
                 BrGen::SigmaInv(i) => BrGen::SigmaInv(self.n - *i),
-            };
+            }
         }
     }
 
@@ -268,7 +268,7 @@ impl Braid {
         serialize(&self).unwrap()
     }
 
-    pub fn from_vec_ser(vec: &[u8]) -> Braid {
+    pub fn from_vec_ser(vec: &[u8]) -> Self {
         deserialize(vec).unwrap()
     }
 }
