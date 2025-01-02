@@ -67,7 +67,7 @@ impl Braid {
             let BrGen::Sigma(a) = g else {
                 panic!("The braid given was not positive!");
             };
-            string_pos.swap(*a + 1, *a);
+            string_pos.swap_(*a + 1, *a);
         }
     }
 }
@@ -96,7 +96,7 @@ impl Permutation for Braid {
         self.n as _
     }
 
-    fn swap(&mut self, _a: usize, _b: usize) {
+    fn swap_(&mut self, _a: usize, _b: usize) {
         panic!("unimplimented")
     }
 
@@ -231,7 +231,7 @@ impl Braid {
                 res.insert(sa);
             }
             // swap the strings
-            string_pos.swap(*a + 1, *a);
+            string_pos.swap_(*a + 1, *a);
         }
         res
     }
@@ -250,7 +250,7 @@ impl Braid {
                 // swap the strings
                 panic!("The braid given was not positive!");
             };
-            string_pos.swap(*a + 1, *a);
+            string_pos.swap_(*a + 1, *a);
         }
 
         for i in 1..n {

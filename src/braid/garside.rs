@@ -36,7 +36,7 @@ impl Braid {
     pub fn neg_pow_to_permute(i: usize, n: usize) -> Self {
         let mut p: VecPermutation = (1..=n).rev().collect();
         // Swap i + 1 with i
-        p.swap(i + 1, i);
+        p.swap_(i + 1, i);
         Self::from_slice(&p[..])
     }
 
@@ -149,7 +149,7 @@ impl Braid {
             contents.push(BrGen::Sigma(swap));
 
             // Update the string_pos with the swap
-            string_pos.swap(swap, swap + 1);
+            string_pos.swap_(swap, swap + 1);
 
             working_index += 1;
         }

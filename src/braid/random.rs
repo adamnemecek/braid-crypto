@@ -44,7 +44,7 @@ fn random_permutation<CR: CryptoRng + RngCore>(
         }
         let to_swap_a = rng.gen_range(1, n + 1);
         let to_swap_b = rng.gen_range(1, n + 1);
-        perm.swap(to_swap_a, to_swap_b);
+        perm.swap_(to_swap_a, to_swap_b);
     }
     perm
 }

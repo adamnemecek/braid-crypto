@@ -3,7 +3,7 @@ pub type VecPermutation = Vec<usize>;
 pub trait Permutation {
     fn id(n: usize) -> Self;
     fn size(&self) -> usize;
-    fn swap(&mut self, a: usize, b: usize);
+    fn swap_(&mut self, a: usize, b: usize);
     // Where does the "strand" starting at position x end up?
     fn position(&self, x: usize) -> usize;
     // Where did the "strand" that ended up at position x start from?
@@ -52,8 +52,8 @@ pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
             .iter()
             .position(|&pos| pos == *target)
             .expect("A non-permutation slice was passed to from_slice");
-        res.swap(i, place_to);
-        reference.swap(i, place_to);
+        res.swap_(i, place_to);
+        reference.swap_(i, place_to);
     }
     res
 }
@@ -67,11 +67,8 @@ impl Permutation for VecPermutation {
         self.len()
     }
 
-    fn swap(&mut self, a: usize, b: usize) {
-        let at_a = self[a - 1];
-        let at_b = self[b - 1];
-        self[b - 1] = at_a;
-        self[a - 1] = at_b;
+    fn swap_(&mut self, a: usize, b: usize) {
+        self.swap(a - 1, b - 1)
     }
 
     fn position(&self, x: usize) -> usize {
@@ -101,7 +98,7 @@ mod tests {
     fn test_module() {
         let perm1: VecPermutation = vec![4, 2, 3, 1];
         let mut perm2 = VecPermutation::id(4);
-        perm2.swap(2, 3);
+        perm2.swap_(2, 3);
         let composed: VecPermutation = perm1.compose(&perm2);
         assert_eq!(composed, vec![4, 3, 2, 1]);
     }
