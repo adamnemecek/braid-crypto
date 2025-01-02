@@ -1,5 +1,3 @@
-extern crate braid_crypto;
-
 use braid_crypto::braid::*;
 
 #[test]

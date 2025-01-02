@@ -2,6 +2,7 @@
 name = "braid-crypto"
 version = "0.1.0"
 authors = ["torrencem <matt@torrencefamily.net>"]
+edition = "2021"
 
 [lib]
 # Disable tests on lib build: to prevent cargo test

@@ -1,9 +1,12 @@
 #![allow(dead_code)] // Temporary while implimenting the full normal form code
 
-use self::BrGen::*;
-use braid::*;
+// use crate::permutation::{Permutation,VecPermutation};
+// pub use braid_crypto::prelude::*;
 use std::collections::HashSet;
 use std::fmt;
+
+// use BrGen::*;
+use crate::{permutation::*, braid::*};
 
 pub struct GarsideForm {
     delta_exp: isize,
@@ -44,7 +47,7 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
     let mut acting_index = 0;
     // O(Ln^2 + L^2)
     while acting_index < final_vec.len() {
-        if let SigmaInv(i) = final_vec[acting_index] {
+        if let BrGen::SigmaInv(i) = final_vec[acting_index] {
             // This generator needs to be replaced
             let mut loc_of_delta = acting_index as isize - 1;
             // remove the "bad" inverse generator
@@ -59,8 +62,8 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
             // Now go backwards and replace sigma_a with sigma_{n - a}
             // O(L) where L is the length of b in terms of generators
             while loc_of_delta != -1 {
-                if let Sigma(a) = final_vec[loc_of_delta as usize] {
-                    final_vec[loc_of_delta as usize] = Sigma(n - a);
+                if let BrGen::Sigma(a) = final_vec[loc_of_delta as usize] {
+                    final_vec[loc_of_delta as usize] = BrGen::Sigma(n - a);
                 } else {
                     panic!("There was a negative sigma?");
                 }
@@ -73,13 +76,10 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
         }
     }
 
-    (
-        counter,
-        Braid {
-            contents: final_vec,
-            n: b.n,
-        },
-    )
+    (counter, Braid {
+        contents: final_vec,
+        n: b.n,
+    })
 }
 
 /**
@@ -102,7 +102,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
 
     // A helpful function for filtering our original braid into what we need
     let sym_to_i = |sym: &BrGen| {
-        if let Sigma(a) = *sym {
+        if let BrGen::Sigma(a) = *sym {
             return a as usize;
         }
         panic!("The given braid was not positive");
@@ -135,7 +135,7 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
             has_crossed.insert((string1_name, string2_name));
         }
 
-        tmp_to_add.push(Sigma(swap as usize));
+        tmp_to_add.push(BrGen::Sigma(swap as usize));
 
         // Update the string_pos with the swap
         string_pos.swap(swap, swap + 1);
@@ -183,7 +183,7 @@ impl Braid {
                         let j = next_starting.difference(&prev_finishing).next().unwrap();
                         // j is in S(B_i+1) but not F(B_i)
                         // bi is easy, just push a sigma on the end
-                        bi.contents.push(Sigma(*j));
+                        bi.contents.push(BrGen::Sigma(*j));
                         // bi1 is harder.
                         // We want to put a sigma -j on the beginning, but we want it to stay positive
                         // Instead, let's consider bi1 as a permutation with j and j + 1 switched
@@ -199,7 +199,7 @@ impl Braid {
                         // and replace bi1 with it
                         bi1.contents = pb.contents.clone();
                     } // For j to go out of scope (j borrows bi1 and bi)
-                      // O(L)
+                    // O(L)
                     next_starting = bi1.starting_set();
                     // O(L)
                     prev_finishing = bi.finishing_set();

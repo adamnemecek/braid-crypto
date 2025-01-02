@@ -1,11 +1,13 @@
 pub mod garside;
 pub mod random;
 
-use self::BrGen::*;
-use super::permutation::*;
+// pub use crate::prelude::*;
+
 use bincode::{deserialize, serialize};
 use indexmap::set::IndexSet;
 use std::ops::Mul;
+
+use crate::{permutation::*,};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BrGen {
@@ -40,11 +42,11 @@ impl Mul for Braid {
 }
 
 // O(L)
-fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
+pub fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
     let string_pos = starting;
     // Iterate through each of our generators
-    for gen in &b.contents {
-        if let Sigma(a) = gen {
+    for g in &b.contents {
+        if let BrGen::Sigma(a) = g {
             string_pos.swap((*a + 1) as usize, *a as usize);
         } else {
             panic!("The braid given was not positive!");
@@ -70,10 +72,10 @@ impl Permutation for Braid {
 
     fn follow_starting(&self, x: usize) -> usize {
         let mut ret = x;
-        for gen in &self.contents {
-            let a = match gen {
-                Sigma(val) => val,
-                SigmaInv(val) => val,
+        for g in &self.contents {
+            let a = match g {
+                BrGen::Sigma(val) => val,
+                BrGen::SigmaInv(val) => val,
             };
             if ret == *a {
                 ret += 1;
@@ -136,18 +138,18 @@ impl Permutation for Braid {
 
 fn invert_gens(gens: &mut Vec<BrGen>) {
     gens.reverse();
-    for gen in gens {
-        let new_gen = match gen {
+    for g in gens {
+        let new_gen = match g {
             BrGen::Sigma(a) => BrGen::SigmaInv(*a),
             BrGen::SigmaInv(a) => BrGen::Sigma(*a),
         };
-        *gen = new_gen;
+        *g = new_gen;
     }
 }
 
 impl Braid {
     pub fn from_positive_sigmas(sigmas: &[usize], n: usize) -> Braid {
-        let contents = sigmas.iter().map(|s| Sigma(*s)).collect();
+        let contents = sigmas.iter().map(|s| BrGen::Sigma(*s)).collect();
         Braid { contents, n }
     }
 
@@ -156,9 +158,9 @@ impl Braid {
             .iter()
             .map(|s| {
                 if *s < 0 {
-                    SigmaInv((*s).abs() as usize)
+                    BrGen::SigmaInv((*s).abs() as usize)
                 } else if *s > 0 {
-                    Sigma(*s as usize)
+                    BrGen::Sigma(*s as usize)
                 } else {
                     panic!("Invalid s given to from_sigmas")
                 }
@@ -194,8 +196,8 @@ impl Braid {
     }
 
     pub fn shift(&mut self) {
-        for gen in &mut self.contents {
-            *gen = match gen {
+        for g in &mut self.contents {
+            *g = match g {
                 BrGen::Sigma(i) => BrGen::Sigma(self.n - *i),
                 BrGen::SigmaInv(i) => BrGen::SigmaInv(self.n - *i),
             };
@@ -212,8 +214,8 @@ impl Braid {
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos: VecPermutation = Permutation::id(n);
         // Iterate through each of our generators
-        for gen in &self.contents {
-            if let BrGen::Sigma(a) = gen {
+        for g in &self.contents {
+            if let BrGen::Sigma(a) = g {
                 let sa = string_pos[(*a - 1) as usize];
                 let sb = string_pos[(*a) as usize];
                 if sa == sb + 1 {
@@ -239,8 +241,8 @@ impl Braid {
         let mut res = IndexSet::with_capacity(n);
         let mut string_pos: VecPermutation = Permutation::id(n);
         // Iterate through each of our generators
-        for gen in &self.contents {
-            if let BrGen::Sigma(a) = gen {
+        for g in &self.contents {
+            if let BrGen::Sigma(a) = g {
                 // swap the strings
                 string_pos.swap((*a + 1) as usize, (*a) as usize);
             } else {
@@ -268,7 +270,7 @@ impl Braid {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{permutation::*, braid::*};
     #[test]
     fn permut_tests() {
         // Based off of the Haskell permutationBraid

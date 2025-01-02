@@ -1,12 +1,12 @@
-use rand::distributions::{Distribution, Standard};
-use rand::os::OsRng;
-use rand::prng::hc128::*;
 use rand::CryptoRng;
 use rand::Rng;
 use rand::RngCore;
 use rand::SeedableRng;
+use rand::distributions::{Distribution, Standard};
+use rand::os::OsRng;
+use rand::prng::hc128::*;
 // Import Braid and members
-use super::*;
+use crate::{permutation::*, braid::*};
 
 fn make_rng() -> Hc128Rng {
     let mut seed: [u8; 32] = [0; 32];
@@ -76,9 +76,10 @@ impl Braid {
     pub fn insert_mutation<CR: CryptoRng + RngCore>(&mut self, rng: &mut CR) {
         let insertion_point = rng.gen_range(0, self.contents.len());
         let to_insert = rng.gen_range(1, self.n);
-        self.contents.insert(insertion_point, Sigma(to_insert));
         self.contents
-            .insert(insertion_point + 1, SigmaInv(to_insert));
+            .insert(insertion_point, BrGen::Sigma(to_insert));
+        self.contents
+            .insert(insertion_point + 1, BrGen::SigmaInv(to_insert));
     }
 
     pub fn swap_mutation(&mut self) {
@@ -86,14 +87,14 @@ impl Braid {
         for indx in 1..self.contents.len() {
             let curr = self.contents[indx];
             match (last, curr) {
-                (Sigma(a), Sigma(b)) => {
+                (BrGen::Sigma(a), BrGen::Sigma(b)) => {
                     if (a as isize - b as isize).abs() > 1 {
                         let tmp = self.contents[indx].clone();
                         self.contents[indx] = self.contents[indx - 1];
                         self.contents[indx - 1] = tmp;
                     }
                 }
-                (SigmaInv(a), SigmaInv(b)) => {
+                (BrGen::SigmaInv(a), BrGen::SigmaInv(b)) => {
                     if (a as isize - b as isize).abs() > 1 {
                         let tmp = self.contents[indx].clone();
                         self.contents[indx] = self.contents[indx - 1];
@@ -117,18 +118,18 @@ impl Braid {
             let kern3 = self.contents[indx + 2];
 
             match (kern1, kern2, kern3) {
-                (Sigma(a), Sigma(b), Sigma(c)) => {
+                (BrGen::Sigma(a), BrGen::Sigma(b), BrGen::Sigma(c)) => {
                     if a == c && b == a + 1 {
-                        self.contents[indx] = Sigma(a + 1);
-                        self.contents[indx + 1] = Sigma(a);
-                        self.contents[indx + 2] = Sigma(a + 1);
+                        self.contents[indx] = BrGen::Sigma(a + 1);
+                        self.contents[indx + 1] = BrGen::Sigma(a);
+                        self.contents[indx + 2] = BrGen::Sigma(a + 1);
                     }
                 }
-                (SigmaInv(a), SigmaInv(b), SigmaInv(c)) => {
+                (BrGen::SigmaInv(a), BrGen::SigmaInv(b), BrGen::SigmaInv(c)) => {
                     if a == c && b == a + 1 {
-                        self.contents[indx] = SigmaInv(a + 1);
-                        self.contents[indx + 1] = SigmaInv(a);
-                        self.contents[indx + 2] = SigmaInv(a + 1);
+                        self.contents[indx] = BrGen::SigmaInv(a + 1);
+                        self.contents[indx + 1] = BrGen::SigmaInv(a);
+                        self.contents[indx + 2] = BrGen::SigmaInv(a + 1);
                     }
                 }
                 _ => {}

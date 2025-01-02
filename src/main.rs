@@ -1,16 +1,12 @@
 #![allow(unknown_lints)]
-pub mod braid;
-pub mod permutation;
 
 #[macro_use]
 extern crate serde_derive;
 
-extern crate bincode;
-extern crate indexmap;
-extern crate rand;
-extern crate serde;
+pub mod braid;
+pub mod permutation;
 
-use braid::*;
+use braid_crypto::prelude::*;
 
 fn main() {
     println!("running Diffie-Hellman-type integration test");
