@@ -15,11 +15,7 @@ pub trait Permutation {
 
     fn as_vec(&self) -> Vec<usize> {
         let n = self.size();
-        let mut v = vec![0usize; n];
-        for i in 1..=n {
-            v[i - 1] = self.follow_ending(i);
-        }
-        v
+        (1..=n).map(|i| self.follow_ending(i)).collect()
     }
 }
 
