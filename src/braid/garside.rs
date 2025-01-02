@@ -197,7 +197,7 @@ impl Braid {
                         perm[*j - 1] = *j + 1;
                         perm[*j] = *j;
                         // TODO: O(?)
-                        braid_to_permutation_with_starting(bi1, &mut perm);
+                        bi1.braid_to_permutation_with_starting(&mut perm);
 
                         // Now, we turn it back into a permutation braid
                         // O(n^2)

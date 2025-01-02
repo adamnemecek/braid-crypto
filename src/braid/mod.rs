@@ -58,15 +58,17 @@ impl std::ops::Mul for Braid {
     }
 }
 
-// O(L)
-pub fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
-    let string_pos = starting;
-    // Iterate through each of our generators
-    for g in &b.contents {
-        let BrGen::Sigma(a) = g else {
-            panic!("The braid given was not positive!");
-        };
-        string_pos.swap(*a + 1, *a);
+impl Braid {
+    // O(L)
+    pub fn braid_to_permutation_with_starting(&self, starting: &mut Vec<usize>) {
+        let string_pos = starting;
+        // Iterate through each of our generators
+        for g in &self.contents {
+            let BrGen::Sigma(a) = g else {
+                panic!("The braid given was not positive!");
+            };
+            string_pos.swap(*a + 1, *a);
+        }
     }
 }
 
@@ -103,7 +105,7 @@ impl Permutation for Braid {
 
     fn as_vec(&self) -> Vec<usize> {
         let mut starting: Vec<usize> = (1..=self.n).collect();
-        braid_to_permutation_with_starting(self, &mut starting);
+        self.braid_to_permutation_with_starting(&mut starting);
         starting
     }
 
