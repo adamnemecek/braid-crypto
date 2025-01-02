@@ -22,7 +22,8 @@ pub enum BrGen {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Braid {
     pub contents: Vec<BrGen>,
-    pub n: usize, // Our braid is an element of B_n
+    // Our braid is an element of B_n
+    pub n: usize,
 }
 
 impl std::ops::Mul for Braid {
@@ -34,12 +35,8 @@ impl std::ops::Mul for Braid {
             "Attempted to compose two different sized braids!"
         );
 
-        let mut contents = self.contents.clone();
-        let mut new_other_contents = other.contents.clone();
-        contents.append(&mut new_other_contents);
-
         Self {
-            contents,
+            contents: self.iter().chain(other.iter()).cloned().collect(),
             n: self.n,
         }
     }
@@ -168,6 +165,10 @@ impl Braid {
         Self { contents, n }
     }
 
+    pub fn iter(&self) -> std::slice::Iter<'_, BrGen> {
+        self.contents.iter()
+    }
+
     pub fn invert(&mut self) {
         self.contents.reverse();
         for g in self.contents.iter_mut() {
@@ -179,12 +180,9 @@ impl Braid {
     }
 
     pub fn inverse(&self) -> Self {
-        let mut contents = self.contents.clone();
-        invert_gens(&mut contents);
-        Self {
-            contents,
-            n: self.n,
-        }
+        let mut ret = self.clone();
+        ret.invert();
+        ret
     }
 
     pub fn shift(&mut self) {
