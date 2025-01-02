@@ -5,7 +5,7 @@ pub trait Permutation {
     fn size(&self) -> usize;
     fn swap(&mut self, a: usize, b: usize);
     // Where does the "strand" starting at position x end up?
-    fn follow_starting(&self, x: usize) -> usize;
+    fn position(&self, x: usize) -> usize;
     // Where did the "strand" that ended up at position x start from?
     fn follow_ending(&self, x: usize) -> usize {
         self.as_vec()[x - 1]
@@ -19,12 +19,12 @@ pub trait Permutation {
     }
 
     fn is_identity(&self) -> bool {
-        (1..=self.size()).all(|i| self.follow_starting(i) == i)
+        (1..=self.size()).all(|i| self.position(i) == i)
     }
 
     fn is_twist(&self) -> bool {
         let n = self.size();
-        (1..=n).all(|i| self.follow_starting(i) == n - i + 1)
+        (1..=n).all(|i| self.position(i) == n - i + 1)
     }
 
     fn compose<B: Permutation, C: Permutation>(&self, second: &B) -> C {
@@ -32,9 +32,9 @@ pub trait Permutation {
         let n = self.size();
         let mut res = VecPermutation::id(n);
         for strand_number in 1..=n {
-            let after_first = self.follow_starting(strand_number);
+            let after_first = self.position(strand_number);
             println!("{:?}", after_first);
-            let result_place = second.follow_starting(after_first);
+            let result_place = second.position(after_first);
             res[result_place - 1] = strand_number;
         }
         C::from_slice(&res[..])
@@ -74,10 +74,10 @@ impl Permutation for VecPermutation {
         self[a - 1] = at_b;
     }
 
-    fn follow_starting(&self, x: usize) -> usize {
+    fn position(&self, x: usize) -> usize {
         self.iter()
             .position(|&strand_number| strand_number == x)
-            .expect("Invalid x given to follow_starting. X has to be in the range (1..=n)")
+            .expect("Invalid x given to position. X has to be in the range (1..=n)")
             + 1
     }
 

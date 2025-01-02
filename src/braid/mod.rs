@@ -88,7 +88,7 @@ impl Permutation for Braid {
         panic!("unimplimented")
     }
 
-    fn follow_starting(&self, x: usize) -> usize {
+    fn position(&self, x: usize) -> usize {
         let mut ret = x;
         for g in &self.contents {
             let a = match g {
