@@ -36,7 +36,7 @@ fn random_permutation<CR: CryptoRng + RngCore>(
     miss_rate: f32,
     rng: &mut CR,
 ) -> VecPermutation {
-    let mut perm: VecPermutation = Permutation::id(n);
+    let mut perm = VecPermutation::id(n);
     for _ in 0..complexity {
         let drawing: f32 = Standard.sample(rng);
         if drawing < miss_rate {

@@ -217,7 +217,7 @@ impl Braid {
     pub fn starting_set(&self) -> IndexSet<usize> {
         let n = self.n as usize;
         let mut res = IndexSet::with_capacity(n);
-        let mut string_pos: VecPermutation = Permutation::id(n);
+        let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.contents {
             if let BrGen::Sigma(a) = g {
@@ -244,7 +244,7 @@ impl Braid {
     pub fn finishing_set(&self) -> IndexSet<usize> {
         let n = self.n as usize;
         let mut res = IndexSet::with_capacity(n);
-        let mut string_pos: VecPermutation = Permutation::id(n);
+        let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.contents {
             if let BrGen::Sigma(a) = g {

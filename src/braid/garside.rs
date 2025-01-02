@@ -1,6 +1,5 @@
 #![allow(dead_code)] // Temporary while implimenting the full normal form code
 
-// use crate::permutation::{Permutation,VecPermutation};
 // pub use braid_crypto::prelude::*;
 use std::{
     collections::HashSet,
@@ -99,7 +98,7 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
 pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     let n = b.n as usize;
     // String at position i is string # string_pos[i - 1]
-    let mut string_pos: VecPermutation = Permutation::id(n);
+    let mut string_pos = VecPermutation::id(n);
     // String i has crossed String j if has_crossed.contains((i, j)) is true (and i < j)
     let mut has_crossed: HashSet<(usize, usize)> = HashSet::new();
     // Our current index in breaking the original braid

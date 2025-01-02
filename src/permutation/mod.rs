@@ -47,7 +47,7 @@ pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
     let n = v.len();
     // Default implimentation using swap
     let mut res: P = Permutation::id(n);
-    let mut reference: VecPermutation = Permutation::id(n);
+    let mut reference = VecPermutation::id(n);
     for (i, target) in v.iter().enumerate().take(n) {
         let place_to = reference
             .iter()
@@ -65,7 +65,7 @@ pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(
 ) -> Pres {
     debug_assert_eq!(first.size(), second.size());
     let n = first.size();
-    let mut res: VecPermutation = Permutation::id(n);
+    let mut res = VecPermutation::id(n);
     for strand_number in 1..=n {
         let after_first = first.follow_starting(strand_number);
         println!("{:?}", after_first);
@@ -76,7 +76,7 @@ pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(
 }
 
 impl Permutation for VecPermutation {
-    fn id(n: usize) -> VecPermutation {
+    fn id(n: usize) -> Self {
         (1..=n).collect()
     }
 
@@ -102,7 +102,7 @@ impl Permutation for VecPermutation {
         self[x - 1]
     }
 
-    fn from_slice(v: &[usize]) -> VecPermutation {
+    fn from_slice(v: &[usize]) -> Self {
         v.to_vec()
     }
 
@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn test_module() {
         let perm1: VecPermutation = vec![4, 2, 3, 1];
-        let mut perm2: VecPermutation = Permutation::id(4);
+        let mut perm2 = VecPermutation::id(4);
         perm2.swap(2, 3);
         let composed: VecPermutation = compose(&perm1, &perm2);
         assert_eq!(composed, vec![4, 3, 2, 1]);
