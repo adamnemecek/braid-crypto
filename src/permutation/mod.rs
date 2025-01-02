@@ -17,25 +17,15 @@ pub trait Permutation {
         let n = self.size();
         (1..=n).map(|i| self.follow_ending(i)).collect()
     }
-}
 
-pub fn is_identity<P: Permutation>(perm: &P) -> bool {
-    for i in 1..=perm.size() {
-        if perm.follow_starting(i) != i {
-            return false;
-        }
+    fn is_identity(&self) -> bool {
+        (1..=self.size()).all(|i| self.follow_starting(i) == i)
     }
-    true
-}
 
-pub fn is_twist<P: Permutation>(perm: &P) -> bool {
-    let n = perm.size();
-    for i in 1..=n {
-        if perm.follow_starting(i) != n - i + 1 {
-            return false;
-        }
+    fn is_twist(&self) -> bool {
+        let n = self.size();
+        (1..=n).all(|i| self.follow_starting(i) == n - i + 1)
     }
-    true
 }
 
 // TODO: More tests on this function's correctness

@@ -212,7 +212,7 @@ impl Braid {
                     prev_finishing = bi.finishing_set();
                 }
             } // Slices of bs go out of scope
-            if is_identity(&bs[working_index + 1]) {
+            if bs[working_index + 1].is_identity() {
                 // bi1 is the identity permutation
                 // don't add it
                 bs.remove(working_index + 1);
@@ -231,7 +231,7 @@ impl Braid {
         let mut result: Vec<VecPermutation> = Vec::new();
         for braid in &mut bs {
             let perm = braid.as_vec();
-            if is_twist(&perm) {
+            if perm.is_twist() {
                 delta_exp += 1;
             } else {
                 result.push(perm);
