@@ -9,7 +9,6 @@ use {
         serialize,
     },
     indexmap::set::IndexSet,
-    std::ops::Mul,
 };
 
 use crate::permutation::*;
@@ -26,7 +25,7 @@ pub struct Braid {
     pub n: usize, // Our braid is an element of B_n
 }
 
-impl Mul for Braid {
+impl std::ops::Mul for Braid {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
@@ -68,7 +67,7 @@ impl Permutation for Braid {
     }
 
     fn size(&self) -> usize {
-        self.n as usize
+        self.n as _
     }
 
     fn swap(&mut self, _a: usize, _b: usize) {
@@ -176,13 +175,10 @@ impl Braid {
 
     pub fn make_half_twist(n: usize) -> Self {
         // TODO: Use with_capacity
-        let mut contents: Vec<BrGen> = Vec::new();
-
-        for k in (1..n + 1).rev() {
-            for j in 1..k {
-                contents.push(BrGen::Sigma(j));
-            }
-        }
+        let contents = (1..n + 1)
+            .rev()
+            .flat_map(|k| (1..k).map(BrGen::Sigma))
+            .collect();
 
         Self { contents, n }
     }
