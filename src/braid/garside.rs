@@ -101,7 +101,7 @@ impl Braid {
      * Original algorithm by me
      * O(L)
      */
-    pub fn break_into_permutations(&self) -> Vec<Self> {
+    pub fn into_permutation(&self) -> Vec<Self> {
         let n = self.n;
         // String at position i is string # string_pos[i - 1]
         let mut string_pos = VecPermutation::id(n);
@@ -162,7 +162,7 @@ impl Braid {
         // O(L*n^2 + L^2)
         let (exponent, braid) = self.left_slide_delta_form();
         // O(L)
-        let mut bs = braid.break_into_permutations();
+        let mut bs = braid.into_permutation();
         let mut working_index = 0;
         while working_index < bs.len() - 1 {
             let mut changed = false;
@@ -239,7 +239,7 @@ impl Braid {
     }
 
     pub fn is_left_weighted(&self) -> bool {
-        let ps = self.break_into_permutations();
+        let ps = self.into_permutation();
         for i in 0..ps.len() - 1 {
             if !ps[i].finishing_set().is_superset(&ps[i + 1].starting_set()) {
                 return false;
@@ -271,24 +271,24 @@ mod tests {
     }
 
     #[test]
-    fn break_into_permutations_tests() {
+    fn into_permutation_tests() {
         let b = Braid::from_sigmas(&[1, 2, 2, 1, 2], 3);
-        let ps = b.break_into_permutations();
+        let ps = b.into_permutation();
         assert_eq!(ps[0].gens, Braid::from_sigmas(&[1, 2], 3).gens);
         assert_eq!(ps[1].gens, Braid::from_sigmas(&[2, 1, 2], 3).gens);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
         let b = Braid::from_slice(&p[..]);
         let old_gens = b.gens.clone();
-        let ps = b.break_into_permutations();
+        let ps = b.into_permutation();
         assert_eq!(ps.len(), 1);
         assert_eq!(ps[0].gens, old_gens);
     }
 
     #[test]
-    fn new_break_into_permutations_tests() {
+    fn new_into_permutation_tests() {
         let a = Braid::from_sigmas(&[2, 2, 2, 2], 3);
-        println!("{:?}", a.break_into_permutations());
+        println!("{:?}", a.into_permutation());
     }
 
     #[test]
