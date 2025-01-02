@@ -139,17 +139,6 @@ impl Permutation for Braid {
     }
 }
 
-fn invert_gens(gens: &mut Vec<BrGen>) {
-    gens.reverse();
-    for g in gens {
-        let new_gen = match g {
-            BrGen::Sigma(a) => BrGen::SigmaInv(*a),
-            BrGen::SigmaInv(a) => BrGen::Sigma(*a),
-        };
-        *g = new_gen;
-    }
-}
-
 impl Braid {
     pub fn from_positive_sigmas(sigmas: &[usize], n: usize) -> Self {
         let contents = sigmas.iter().map(|s| BrGen::Sigma(*s)).collect();
@@ -159,14 +148,11 @@ impl Braid {
     pub fn from_sigmas(sigmas: &[isize], n: usize) -> Self {
         let contents = sigmas
             .iter()
-            .map(|s| {
-                if *s < 0 {
-                    BrGen::SigmaInv((*s).abs() as usize)
-                } else if *s > 0 {
-                    BrGen::Sigma(*s as usize)
-                } else {
-                    panic!("Invalid s given to from_sigmas")
-                }
+            .cloned()
+            .map(|s| match s {
+                ..0 => BrGen::SigmaInv(s.abs() as _),
+                0 => panic!("Invalid s given to from_sigmas"),
+                1.. => BrGen::Sigma(s as _),
             })
             .collect();
         Self { contents, n }
@@ -183,7 +169,13 @@ impl Braid {
     }
 
     pub fn invert(&mut self) {
-        invert_gens(&mut self.contents);
+        self.contents.reverse();
+        for g in self.contents.iter_mut() {
+            *g = match g {
+                BrGen::Sigma(a) => BrGen::SigmaInv(*a),
+                BrGen::SigmaInv(a) => BrGen::Sigma(*a),
+            };
+        }
     }
 
     pub fn inverse(&self) -> Self {
