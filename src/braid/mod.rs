@@ -50,11 +50,10 @@ pub fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) 
     let string_pos = starting;
     // Iterate through each of our generators
     for g in &b.contents {
-        if let BrGen::Sigma(a) = g {
-            string_pos.swap(*a + 1, *a);
-        } else {
+        let BrGen::Sigma(a) = g else {
             panic!("The braid given was not positive!");
-        }
+        };
+        string_pos.swap(*a + 1, *a);
     }
 }
 
@@ -216,19 +215,18 @@ impl Braid {
         let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.contents {
-            if let BrGen::Sigma(a) = g {
-                let sa = string_pos[*a - 1];
-                let sb = string_pos[*a];
-                if sa == sb + 1 {
-                    res.insert(sb);
-                } else if sb == sa + 1 {
-                    res.insert(sa);
-                }
-                // swap the strings
-                string_pos.swap(*a + 1, *a);
-            } else {
+            let BrGen::Sigma(a) = g else {
                 panic!("The braid given was not positive!");
+            };
+            let sa = string_pos[*a - 1];
+            let sb = string_pos[*a];
+            if sa == sb + 1 {
+                res.insert(sb);
+            } else if sb == sa + 1 {
+                res.insert(sa);
             }
+            // swap the strings
+            string_pos.swap(*a + 1, *a);
         }
         res
     }
@@ -243,12 +241,11 @@ impl Braid {
         let mut string_pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.contents {
-            if let BrGen::Sigma(a) = g {
+            let BrGen::Sigma(a) = g else {
                 // swap the strings
-                string_pos.swap(*a + 1, *a);
-            } else {
                 panic!("The braid given was not positive!");
-            }
+            };
+            string_pos.swap(*a + 1, *a);
         }
 
         for i in 1..n {

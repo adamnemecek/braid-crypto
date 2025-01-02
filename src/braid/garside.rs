@@ -66,11 +66,10 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
             // Now go backwards and replace sigma_a with sigma_{n - a}
             // O(L) where L is the length of b in terms of generators
             while loc_of_delta != -1 {
-                if let BrGen::Sigma(a) = final_vec[loc_of_delta as usize] {
-                    final_vec[loc_of_delta as usize] = BrGen::Sigma(n - a);
-                } else {
+                let BrGen::Sigma(a) = final_vec[loc_of_delta as usize] else {
                     panic!("There was a negative sigma?");
-                }
+                };
+                final_vec[loc_of_delta as usize] = BrGen::Sigma(n - a);
                 loc_of_delta -= 1;
             }
             counter -= 1;
@@ -109,10 +108,10 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
 
     // A helpful function for filtering our original braid into what we need
     let sym_to_i = |sym: &BrGen| {
-        if let BrGen::Sigma(a) = *sym {
-            return a;
-        }
-        panic!("The given braid was not positive");
+        let BrGen::Sigma(a) = *sym else {
+            panic!("The given braid was not positive");
+        };
+        a
     };
 
     let symbols: Vec<usize> = b.contents.iter().map(sym_to_i).collect();
