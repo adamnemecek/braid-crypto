@@ -277,12 +277,12 @@ mod tests {
     fn permut_tests() {
         // Based off of the Haskell permutationBraid
         let p = vec![3, 4, 1, 2];
-        let b: Braid = Permutation::from_slice(&p[..]);
+        let b = Braid::from_slice(&p[..]);
         let b2 = Braid::from_sigmas(&[2, 1, 3, 2], 4);
         assert_eq!(b.contents, b2.contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
-        let b: Braid = Permutation::from_slice(&p[..]);
+        let b = Braid::from_slice(&p[..]);
         let b2 = Braid::from_sigmas(&[2, 6, 5, 4, 3, 5], 7);
         assert_eq!(b.contents, b2.contents);
     }

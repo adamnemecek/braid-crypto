@@ -32,7 +32,7 @@ pub trait Permutation {
 pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
     let n = v.len();
     // Default implimentation using swap
-    let mut res: P = Permutation::id(n);
+    let mut res = P::id(n);
     let mut reference = VecPermutation::id(n);
     for (i, target) in v.iter().enumerate().take(n) {
         let place_to = reference
@@ -58,7 +58,7 @@ pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(
         let result_place = second.follow_starting(after_first);
         res[result_place - 1] = strand_number;
     }
-    Permutation::from_slice(&res[..])
+    Pres::from_slice(&res[..])
 }
 
 impl Permutation for VecPermutation {

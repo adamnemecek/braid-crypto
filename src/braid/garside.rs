@@ -26,17 +26,19 @@ impl fmt::Display for GarsideForm {
     }
 }
 
-/**
- * Calculate what B_i should be given that sigma_i^-1 = delta_n^-1 B_i
- * and that B_i is a permutation Braid
- * NOTE: This is based on step 1 of Garside Normal Form
- * O(n^2)
- */
-fn neg_pow_to_permute(i: usize, n: usize) -> Braid {
-    let mut my_permutation: VecPermutation = (1..=n).rev().collect();
-    // Swap i + 1 with i
-    my_permutation.swap(i + 1, i);
-    Permutation::from_slice(&my_permutation[..])
+impl Braid {
+    /**
+     * Calculate what B_i should be given that sigma_i^-1 = delta_n^-1 B_i
+     * and that B_i is a permutation Braid
+     * NOTE: This is based on step 1 of Garside Normal Form
+     * O(n^2)
+     */
+    fn neg_pow_to_permute(i: usize, n: usize) -> Self {
+        let mut p: VecPermutation = (1..=n).rev().collect();
+        // Swap i + 1 with i
+        p.swap(i + 1, i);
+        Self::from_slice(&p[..])
+    }
 }
 
 /**
@@ -58,7 +60,7 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
             final_vec.remove(acting_index);
             // replacement = the replacement (minus the delta)
             // O(n^2)
-            let replacement = neg_pow_to_permute(i, n);
+            let replacement = Braid::neg_pow_to_permute(i, n);
             for symb in &replacement.contents {
                 final_vec.insert(acting_index, *symb);
                 acting_index += 1;
@@ -197,7 +199,7 @@ impl Braid {
 
                         // Now, we turn it back into a permutation braid
                         // O(n^2)
-                        let pb: Braid = Permutation::from_slice(&perm[..]);
+                        let pb = Braid::from_slice(&perm[..]);
                         // and replace bi1 with it
                         bi1.contents = pb.contents.clone();
                     } // For j to go out of scope (j borrows bi1 and bi)
@@ -257,7 +259,7 @@ mod tests {
     fn neg_pow_to_perm_tests() {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
         let expected = Braid::from_sigmas(&[3, 2, 1, 3, 2], 4);
-        let actual = neg_pow_to_permute(3, 4);
+        let actual = Braid::neg_pow_to_permute(3, 4);
         assert_eq!(expected.contents, actual.contents);
     }
 
@@ -279,7 +281,7 @@ mod tests {
         assert_eq!(ps[1].contents, Braid::from_sigmas(&[2, 1, 2], 3).contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
-        let b: Braid = Permutation::from_slice(&p[..]);
+        let b = Braid::from_slice(&p[..]);
         let old_contents = b.contents.clone();
         let ps = break_into_permutations(&b);
         assert_eq!(ps.len(), 1);
