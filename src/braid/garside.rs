@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::fmt;
 
 // use BrGen::*;
-use crate::{permutation::*, braid::*};
+use crate::{braid::*, permutation::*};
 
 pub struct GarsideForm {
     delta_exp: isize,
@@ -76,10 +76,13 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
         }
     }
 
-    (counter, Braid {
-        contents: final_vec,
-        n: b.n,
-    })
+    (
+        counter,
+        Braid {
+            contents: final_vec,
+            n: b.n,
+        },
+    )
 }
 
 /**
@@ -199,7 +202,7 @@ impl Braid {
                         // and replace bi1 with it
                         bi1.contents = pb.contents.clone();
                     } // For j to go out of scope (j borrows bi1 and bi)
-                    // O(L)
+                      // O(L)
                     next_starting = bi1.starting_set();
                     // O(L)
                     prev_finishing = bi.finishing_set();

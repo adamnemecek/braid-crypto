@@ -7,7 +7,7 @@ use bincode::{deserialize, serialize};
 use indexmap::set::IndexSet;
 use std::ops::Mul;
 
-use crate::{permutation::*,};
+use crate::permutation::*;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BrGen {
@@ -270,7 +270,7 @@ impl Braid {
 
 #[cfg(test)]
 mod tests {
-    use crate::{permutation::*, braid::*};
+    use crate::{braid::*, permutation::*};
     #[test]
     fn permut_tests() {
         // Based off of the Haskell permutationBraid
