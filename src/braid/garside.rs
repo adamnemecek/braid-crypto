@@ -47,7 +47,7 @@ impl Braid {
      */
     pub fn left_slide_delta_form(&self) -> (isize, Self) {
         let n = self.n;
-        let mut contents: Vec<BrGen> = self.contents.clone();
+        let mut contents = self.contents.clone();
         let mut counter = 0;
         let mut acting_index = 0;
         // O(Ln^2 + L^2)
@@ -89,12 +89,15 @@ impl Braid {
         )
     }
 }
-// A helpful function for filtering our original braid into what we need
-fn sym_to_i(sym: &BrGen) -> usize {
-    let BrGen::Sigma(a) = *sym else {
-        panic!("The given braid was not positive");
-    };
-    a
+
+impl BrGen {
+    // A helpful function for filtering our original braid into what we need
+    fn sym_to_i(&self) -> usize {
+        let BrGen::Sigma(a) = self else {
+            panic!("The given braid was not positive");
+        };
+        *a
+    }
 }
 
 impl Braid {
@@ -116,7 +119,7 @@ impl Braid {
         let mut res: Vec<Self> = vec![];
         let mut contents: Vec<BrGen> = vec![];
 
-        let symbols: Vec<usize> = self.iter().map(sym_to_i).collect();
+        let symbols: Vec<usize> = self.iter().map(BrGen::sym_to_i).collect();
 
         // The algorithm
         // O(L)
