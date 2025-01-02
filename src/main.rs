@@ -5,10 +5,10 @@ pub mod permutation;
 #[macro_use]
 extern crate serde_derive;
 
-extern crate serde;
 extern crate bincode;
 extern crate indexmap;
 extern crate rand;
+extern crate serde;
 
 use braid::*;
 
@@ -18,7 +18,7 @@ fn main() {
     let public = Braid::from_sigmas(&[1, 2, 3, 4, 5, 6, 7], 8);
 
     let mut s_alice = Braid::random_positive(3, 3, 3, 0.1);
-    let mut r_bob   = Braid::random_positive(3, 3, 3, 0.1);
+    let mut r_bob = Braid::random_positive(3, 3, 3, 0.1);
 
     s_alice.n = 8;
     r_bob.n = 8;

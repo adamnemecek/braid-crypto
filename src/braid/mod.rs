@@ -1,38 +1,43 @@
 pub mod garside;
 pub mod random;
 
-use std::ops::Mul;
-use bincode::{serialize, deserialize};
-use indexmap::set::IndexSet;
 use self::BrGen::*;
 use super::permutation::*;
+use bincode::{deserialize, serialize};
+use indexmap::set::IndexSet;
+use std::ops::Mul;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BrGen {
     Sigma(usize),
-    SigmaInv(usize)
+    SigmaInv(usize),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Braid {
     pub contents: Vec<BrGen>,
-    pub n: usize // Our braid is an element of B_n
+    pub n: usize, // Our braid is an element of B_n
 }
 
 impl Mul for Braid {
     type Output = Braid;
 
     fn mul(self, other: Braid) -> Braid {
-        debug_assert_eq!(self.n, other.n, "Attempted to compose two different sized braids!");
+        debug_assert_eq!(
+            self.n, other.n,
+            "Attempted to compose two different sized braids!"
+        );
 
         let mut new_contents = self.contents.clone();
         let mut new_other_contents = other.contents.clone();
         new_contents.append(&mut new_other_contents);
-        
-        Braid { contents: new_contents, n: self.n}
+
+        Braid {
+            contents: new_contents,
+            n: self.n,
+        }
     }
 }
-
 
 // O(L)
 fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
@@ -49,7 +54,10 @@ fn braid_to_permutation_with_starting(b: &Braid, starting: &mut Vec<usize>) {
 
 impl Permutation for Braid {
     fn id(n: usize) -> Braid {
-        Braid { n: n as usize, contents: vec![] }
+        Braid {
+            n: n as usize,
+            contents: vec![],
+        }
     }
 
     fn size(&self) -> usize {
@@ -138,38 +146,38 @@ fn invert_gens(gens: &mut Vec<BrGen>) {
 }
 
 impl Braid {
-
-    pub fn from_positive_sigmas(sigmas: &[usize], n:usize) -> Braid {
-        let contents = sigmas.iter().map(|s| {
-            Sigma(*s)
-        }).collect();
-        Braid {contents, n}
+    pub fn from_positive_sigmas(sigmas: &[usize], n: usize) -> Braid {
+        let contents = sigmas.iter().map(|s| Sigma(*s)).collect();
+        Braid { contents, n }
     }
 
-    pub fn from_sigmas(sigmas: &[isize], n:usize) -> Braid {
-        let contents = sigmas.iter().map(|s| {
-            if *s < 0 {
-                SigmaInv((*s).abs() as usize)
-            } else if *s > 0 {
-                Sigma(*s as usize)
-            } else {
-                panic!("Invalid s given to from_sigmas")
-            }
-        }).collect();
-        Braid {contents, n}
+    pub fn from_sigmas(sigmas: &[isize], n: usize) -> Braid {
+        let contents = sigmas
+            .iter()
+            .map(|s| {
+                if *s < 0 {
+                    SigmaInv((*s).abs() as usize)
+                } else if *s > 0 {
+                    Sigma(*s as usize)
+                } else {
+                    panic!("Invalid s given to from_sigmas")
+                }
+            })
+            .collect();
+        Braid { contents, n }
     }
 
     pub fn make_half_twist(n: usize) -> Braid {
         // TODO: Use with_capacity
         let mut contents: Vec<BrGen> = Vec::new();
 
-        for k in (1..n+1).rev() {
+        for k in (1..n + 1).rev() {
             for j in 1..k {
                 contents.push(BrGen::Sigma(j));
             }
         }
 
-        Braid {contents, n}
+        Braid { contents, n }
     }
 
     pub fn invert(&mut self) {
@@ -179,14 +187,17 @@ impl Braid {
     pub fn inverse(&self) -> Braid {
         let mut new_contents = self.contents.clone();
         invert_gens(&mut new_contents);
-        Braid {contents: new_contents, n:self.n}
+        Braid {
+            contents: new_contents,
+            n: self.n,
+        }
     }
 
     pub fn shift(&mut self) {
         for gen in &mut self.contents {
             *gen = match gen {
                 BrGen::Sigma(i) => BrGen::Sigma(self.n - *i),
-                BrGen::SigmaInv(i) => BrGen::SigmaInv(self.n - *i)
+                BrGen::SigmaInv(i) => BrGen::SigmaInv(self.n - *i),
             };
         }
     }
@@ -207,7 +218,7 @@ impl Braid {
                 let sb = string_pos[(*a) as usize];
                 if sa == sb + 1 {
                     res.insert(sb as usize);
-                } else if sb == sa + 1{
+                } else if sb == sa + 1 {
                     res.insert(sa as usize);
                 }
                 // swap the strings
@@ -263,7 +274,7 @@ mod tests {
         // Based off of the Haskell permutationBraid
         let p = vec![3, 4, 1, 2];
         let b: Braid = Permutation::from_slice(&p[..]);
-        let b2 = Braid::from_sigmas(&[2,1,3,2], 4);
+        let b2 = Braid::from_sigmas(&[2, 1, 3, 2], 4);
         assert_eq!(b.contents, b2.contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
@@ -278,15 +289,15 @@ mod tests {
         println!("{:?}", b.starting_set());
         println!("{:?}", b.finishing_set());
         println!();
-        let b1 = Braid::from_sigmas(&[2,1,3,2,1], 4);
-        let b2 = Braid::from_sigmas(&[1,2], 4);
+        let b1 = Braid::from_sigmas(&[2, 1, 3, 2, 1], 4);
+        let b2 = Braid::from_sigmas(&[1, 2], 4);
 
         println!("{:?}, {:?}", b1.starting_set(), b2.starting_set());
         println!("{:?}, {:?}", b1.finishing_set(), b2.finishing_set());
         println!();
 
-        let b1 = Braid::from_sigmas(&vec![1,2], 3);
-        let b2 = Braid::from_sigmas(&vec![2,1,2], 3);
+        let b1 = Braid::from_sigmas(&vec![1, 2], 3);
+        let b2 = Braid::from_sigmas(&vec![2, 1, 2], 3);
         println!("{:?}, {:?}", b1.starting_set(), b2.starting_set());
         println!("{:?}, {:?}", b1.finishing_set(), b2.finishing_set());
     }

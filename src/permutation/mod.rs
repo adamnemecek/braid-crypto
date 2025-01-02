@@ -49,15 +49,20 @@ pub fn from_slice_slow<P: Permutation>(v: &[usize]) -> P {
     let mut res: P = Permutation::id(n);
     let mut reference: VecPermutation = Permutation::id(n);
     for (i, target) in v.iter().enumerate().take(n) {
-        let place_to = reference.iter().position(|&pos| pos == *target)
-                        .expect("A non-permutation slice was passed to from_slice");
+        let place_to = reference
+            .iter()
+            .position(|&pos| pos == *target)
+            .expect("A non-permutation slice was passed to from_slice");
         res.swap(i, place_to);
         reference.swap(i, place_to);
     }
     res
 }
 
-pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(first: &Pa, second: &Pb) -> Pres {
+pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(
+    first: &Pa,
+    second: &Pb,
+) -> Pres {
     debug_assert_eq!(first.size(), second.size());
     let n = first.size();
     let mut res: VecPermutation = Permutation::id(n);
@@ -71,7 +76,7 @@ pub fn compose<Pa: Permutation, Pb: Permutation, Pres: Permutation>(first: &Pa, 
 }
 
 impl Permutation for VecPermutation {
-    fn id(n: usize) -> VecPermutation{
+    fn id(n: usize) -> VecPermutation {
         (1..=n).collect()
     }
 
@@ -87,7 +92,10 @@ impl Permutation for VecPermutation {
     }
 
     fn follow_starting(&self, x: usize) -> usize {
-        self.iter().position(|&strand_number| strand_number == x).expect("Invalid x given to follow_starting. X has to be in the range (1..=n)") + 1
+        self.iter()
+            .position(|&strand_number| strand_number == x)
+            .expect("Invalid x given to follow_starting. X has to be in the range (1..=n)")
+            + 1
     }
 
     fn follow_ending(&self, x: usize) -> usize {

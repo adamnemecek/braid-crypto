@@ -1,7 +1,7 @@
 #![allow(dead_code)] // Temporary while implimenting the full normal form code
 
-use braid::*;
 use self::BrGen::*;
+use braid::*;
 use std::collections::HashSet;
 use std::fmt;
 
@@ -25,7 +25,7 @@ impl fmt::Display for GarsideForm {
  * NOTE: This is based on step 1 of Garside Normal Form
  * O(n^2)
  */
-fn neg_pow_to_permute(i:usize, n:usize) -> Braid {
+fn neg_pow_to_permute(i: usize, n: usize) -> Braid {
     let mut my_permutation: VecPermutation = (1..=n).rev().collect();
     // Swap i + 1 with i
     my_permutation.swap(i + 1, i);
@@ -73,7 +73,13 @@ fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
         }
     }
 
-    (counter, Braid {contents: final_vec, n: b.n})
+    (
+        counter,
+        Braid {
+            contents: final_vec,
+            n: b.n,
+        },
+    )
 }
 
 /**
@@ -112,9 +118,13 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
         let string2_name = string_pos[swap];
         // Have these strings crossed before?
         if has_crossed.contains(&(string1_name, string2_name))
-        || has_crossed.contains(&(string2_name, string1_name)) {
+            || has_crossed.contains(&(string2_name, string1_name))
+        {
             // They have. Let's seperate into a new Q
-            res.push(Braid {contents: tmp_to_add.clone(), n:n as usize});
+            res.push(Braid {
+                contents: tmp_to_add.clone(),
+                n: n as usize,
+            });
             tmp_to_add.clear();
             // Clear the has_crossed set
             has_crossed.clear();
@@ -134,13 +144,14 @@ pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
     }
 
     if !tmp_to_add.is_empty() {
-        res.push(Braid {contents: tmp_to_add, n:n as usize});
+        res.push(Braid {
+            contents: tmp_to_add,
+            n: n as usize,
+        });
     }
 
     res
 }
-
-
 
 impl Braid {
     // TODO: Re-evaluate O() of as_garside form with workingindex -= 1 change
@@ -154,9 +165,10 @@ impl Braid {
         let mut working_index = 0;
         while working_index < bs.len() - 1 {
             let mut changed = false;
-            { // Scope for slices of bs
+            {
+                // Scope for slices of bs
                 // Split bs to take multiple mutable references
-                let (head, tail) = bs.split_at_mut(working_index + 1); 
+                let (head, tail) = bs.split_at_mut(working_index + 1);
                 let bi = &mut head[working_index];
                 let bi1 = &mut tail[0];
                 // O(L)
@@ -180,14 +192,14 @@ impl Braid {
                         perm[(*j) as usize] = (*j) as usize;
                         // TODO: O(?)
                         braid_to_permutation_with_starting(bi1, &mut perm);
-                        
+
                         // Now, we turn it back into a permutation braid
                         // O(n^2)
                         let pb: Braid = Permutation::from_slice(&perm[..]);
                         // and replace bi1 with it
                         bi1.contents = pb.contents.clone();
                     } // For j to go out of scope (j borrows bi1 and bi)
-                    // O(L)
+                      // O(L)
                     next_starting = bi1.starting_set();
                     // O(L)
                     prev_finishing = bi.finishing_set();
@@ -199,7 +211,7 @@ impl Braid {
                 bs.remove(working_index + 1);
             }
             if changed && working_index != 0 {
-                // Go back to check if the starting set of this was 
+                // Go back to check if the starting set of this was
                 working_index -= 1;
             } else {
                 working_index += 1;
@@ -219,7 +231,10 @@ impl Braid {
             }
         }
 
-        GarsideForm {delta_exp: delta_exp, permutations: result}
+        GarsideForm {
+            delta_exp: delta_exp,
+            permutations: result,
+        }
     }
 
     pub fn is_left_weighted(&self) -> bool {
@@ -232,8 +247,6 @@ impl Braid {
         true
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -292,7 +305,7 @@ mod tests {
         // From page 13/14 of Garber
         let b = Braid::from_sigmas(&[1, -3, 2], 4);
         let gform = b.as_garside_form();
-        
+
         let expected_exp = -1;
         let expected_perm1 = Braid::from_sigmas(&[2, 1, 3, 2, 1], 4).as_vec();
         let expected_perm2 = Braid::from_sigmas(&[1, 2], 4).as_vec();
@@ -309,17 +322,26 @@ mod tests {
         let a1 = Braid::from_sigmas(&[2, 1, 2, 1, 2], 3);
         let a3 = Braid::from_sigmas(&[2, 2, 1, 2, 2], 3);
 
-        assert_eq!(format!("{}", a1.as_garside_form()), format!("{}", a3.as_garside_form()));
+        assert_eq!(
+            format!("{}", a1.as_garside_form()),
+            format!("{}", a3.as_garside_form())
+        );
 
         let a1 = Braid::from_sigmas(&[2, 1, 2, 1, 2, 2, 2], 3);
         let a3 = Braid::from_sigmas(&[2, 2, 1, 2, 2, 2, 2], 3);
 
-        assert_eq!(format!("{}", a1.as_garside_form()), format!("{}", a3.as_garside_form()));
+        assert_eq!(
+            format!("{}", a1.as_garside_form()),
+            format!("{}", a3.as_garside_form())
+        );
 
         // To test removing final twists
         let a1 = Braid::from_sigmas(&[1, 3, -3, 2, 1], 4);
         let a3 = Braid::from_sigmas(&[2, 1, 2], 4);
 
-        assert_eq!(format!("{}", a1.as_garside_form()), format!("{}", a3.as_garside_form()));
+        assert_eq!(
+            format!("{}", a1.as_garside_form()),
+            format!("{}", a3.as_garside_form())
+        );
     }
 }

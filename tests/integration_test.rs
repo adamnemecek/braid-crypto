@@ -21,7 +21,7 @@ fn test_key_exchange() {
         let public = Braid::random_positive(15, 5, 2, 0.0);
 
         let mut s_alice = Braid::random_positive(7, 3, 2, 0.1);
-        let mut r_bob   = Braid::random_positive(7, 3, 2, 0.1);
+        let mut r_bob = Braid::random_positive(7, 3, 2, 0.1);
 
         s_alice.n = 15;
         r_bob.n = 15;
