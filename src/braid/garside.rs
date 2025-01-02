@@ -2,11 +2,16 @@
 
 // use crate::permutation::{Permutation,VecPermutation};
 // pub use braid_crypto::prelude::*;
-use std::collections::HashSet;
-use std::fmt;
+use std::{
+    collections::HashSet,
+    fmt,
+};
 
 // use BrGen::*;
-use crate::{braid::*, permutation::*};
+use crate::{
+    braid::*,
+    permutation::*,
+};
 
 pub struct GarsideForm {
     delta_exp: isize,
@@ -235,7 +240,7 @@ impl Braid {
         }
 
         GarsideForm {
-            delta_exp: delta_exp,
+            delta_exp,
             permutations: result,
         }
     }

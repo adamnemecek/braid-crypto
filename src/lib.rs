@@ -7,5 +7,8 @@ pub mod braid;
 mod permutation;
 
 pub mod prelude {
-    pub use crate::{braid::*, permutation::*};
+    pub use crate::{
+        braid::*,
+        permutation::*,
+    };
 }

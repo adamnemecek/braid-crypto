@@ -3,9 +3,14 @@ pub mod random;
 
 // pub use crate::prelude::*;
 
-use bincode::{deserialize, serialize};
-use indexmap::set::IndexSet;
-use std::ops::Mul;
+use {
+    bincode::{
+        deserialize,
+        serialize,
+    },
+    indexmap::set::IndexSet,
+    std::ops::Mul,
+};
 
 use crate::permutation::*;
 
@@ -270,7 +275,10 @@ impl Braid {
 
 #[cfg(test)]
 mod tests {
-    use crate::{braid::*, permutation::*};
+    use crate::{
+        braid::*,
+        permutation::*,
+    };
     #[test]
     fn permut_tests() {
         // Based off of the Haskell permutationBraid

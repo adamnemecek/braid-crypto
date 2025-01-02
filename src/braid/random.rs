@@ -1,12 +1,20 @@
-use rand::distributions::{Distribution, Standard};
-use rand::os::OsRng;
-use rand::prng::hc128::*;
-use rand::CryptoRng;
-use rand::Rng;
-use rand::RngCore;
-use rand::SeedableRng;
+use rand::{
+    distributions::{
+        Distribution,
+        Standard,
+    },
+    os::OsRng,
+    prng::hc128::*,
+    CryptoRng,
+    Rng,
+    RngCore,
+    SeedableRng,
+};
 // Import Braid and members
-use crate::{braid::*, permutation::*};
+use crate::{
+    braid::*,
+    permutation::*,
+};
 
 fn make_rng() -> Hc128Rng {
     let mut seed: [u8; 32] = [0; 32];
