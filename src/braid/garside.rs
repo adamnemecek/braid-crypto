@@ -97,66 +97,68 @@ fn sym_to_i(sym: &BrGen) -> usize {
     };
     a
 }
-/**
- * Break a braid into a series of permutation braids Q_i
- * Choose the longest permutation braids possible.
- * Original algorithm by me
- * O(L)
- */
-pub fn break_into_permutations(b: &Braid) -> Vec<Braid> {
-    let n = b.n;
-    // String at position i is string # string_pos[i - 1]
-    let mut string_pos = VecPermutation::id(n);
-    // String i has crossed String j if has_crossed.contains((i, j)) is true (and i < j)
-    let mut has_crossed = HashSet::<(usize, usize)>::new();
-    // Our current index in breaking the original braid
-    let mut working_index = 0;
-    // The result we'll return
-    let mut res: Vec<Braid> = vec![];
-    let mut contents: Vec<BrGen> = vec![];
 
-    let symbols: Vec<usize> = b.contents.iter().map(sym_to_i).collect();
+impl Braid {
+    /**
+     * Break a braid into a series of permutation braids Q_i
+     * Choose the longest permutation braids possible.
+     * Original algorithm by me
+     * O(L)
+     */
+    pub fn break_into_permutations(&self) -> Vec<Self> {
+        let n = self.n;
+        // String at position i is string # string_pos[i - 1]
+        let mut string_pos = VecPermutation::id(n);
+        // String i has crossed String j if has_crossed.contains((i, j)) is true (and i < j)
+        let mut has_crossed = HashSet::<(usize, usize)>::new();
+        // Our current index in breaking the original braid
+        let mut working_index = 0;
+        // The result we'll return
+        let mut res: Vec<Self> = vec![];
+        let mut contents: Vec<BrGen> = vec![];
 
-    // The algorithm
-    // O(L)
-    while working_index < symbols.len() {
-        let swap = symbols[working_index];
-        let string1_name = string_pos[swap - 1];
-        let string2_name = string_pos[swap];
-        // Have these strings crossed before?
-        if has_crossed.contains(&(string1_name, string2_name))
-            || has_crossed.contains(&(string2_name, string1_name))
-        {
-            // They have. Let's seperate into a new Q
-            res.push(Braid {
-                contents: contents.clone(),
-                n,
-            });
-            contents.clear();
-            // Clear the has_crossed set
-            has_crossed.clear();
-            // New: these strings have still crossed now
-            has_crossed.insert((string1_name, string2_name));
-        } else {
-            // They have not. Now they have
-            has_crossed.insert((string1_name, string2_name));
+        let symbols: Vec<usize> = self.iter().map(sym_to_i).collect();
+
+        // The algorithm
+        // O(L)
+        while working_index < symbols.len() {
+            let swap = symbols[working_index];
+            let string1_name = string_pos[swap - 1];
+            let string2_name = string_pos[swap];
+            // Have these strings crossed before?
+            if has_crossed.contains(&(string1_name, string2_name))
+                || has_crossed.contains(&(string2_name, string1_name))
+            {
+                // They have. Let's seperate into a new Q
+                res.push(Self {
+                    contents: contents.clone(),
+                    n,
+                });
+                contents.clear();
+                // Clear the has_crossed set
+                has_crossed.clear();
+                // New: these strings have still crossed now
+                has_crossed.insert((string1_name, string2_name));
+            } else {
+                // They have not. Now they have
+                has_crossed.insert((string1_name, string2_name));
+            }
+
+            contents.push(BrGen::Sigma(swap));
+
+            // Update the string_pos with the swap
+            string_pos.swap(swap, swap + 1);
+
+            working_index += 1;
         }
 
-        contents.push(BrGen::Sigma(swap));
+        if !contents.is_empty() {
+            res.push(Self { contents, n });
+        }
 
-        // Update the string_pos with the swap
-        string_pos.swap(swap, swap + 1);
-
-        working_index += 1;
+        res
     }
-
-    if !contents.is_empty() {
-        res.push(Braid { contents, n });
-    }
-
-    res
 }
-
 impl Braid {
     // TODO: Re-evaluate O() of as_garside form with workingindex -= 1 change
     // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
@@ -165,7 +167,7 @@ impl Braid {
         // O(L*n^2 + L^2)
         let (exponent, braid) = left_slide_delta_form(&self);
         // O(L)
-        let mut bs = break_into_permutations(&braid);
+        let mut bs = braid.break_into_permutations();
         let mut working_index = 0;
         while working_index < bs.len() - 1 {
             let mut changed = false;
@@ -242,7 +244,7 @@ impl Braid {
     }
 
     pub fn is_left_weighted(&self) -> bool {
-        let ps = break_into_permutations(self);
+        let ps = self.break_into_permutations();
         for i in 0..ps.len() - 1 {
             if !ps[i].finishing_set().is_superset(&ps[i + 1].starting_set()) {
                 return false;
@@ -276,14 +278,14 @@ mod tests {
     #[test]
     fn break_into_permutations_tests() {
         let b = Braid::from_sigmas(&[1, 2, 2, 1, 2], 3);
-        let ps = break_into_permutations(&b);
+        let ps = b.break_into_permutations();
         assert_eq!(ps[0].contents, Braid::from_sigmas(&[1, 2], 3).contents);
         assert_eq!(ps[1].contents, Braid::from_sigmas(&[2, 1, 2], 3).contents);
 
         let p = vec![1, 3, 7, 2, 5, 4, 6];
         let b = Braid::from_slice(&p[..]);
         let old_contents = b.contents.clone();
-        let ps = break_into_permutations(&b);
+        let ps = b.break_into_permutations();
         assert_eq!(ps.len(), 1);
         assert_eq!(ps[0].contents, old_contents);
     }
@@ -291,7 +293,7 @@ mod tests {
     #[test]
     fn new_break_into_permutations_tests() {
         let a = Braid::from_sigmas(&[2, 2, 2, 2], 3);
-        println!("{:?}", break_into_permutations(&a));
+        println!("{:?}", a.break_into_permutations());
     }
 
     #[test]
