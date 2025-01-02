@@ -19,6 +19,22 @@ pub enum BrGen {
     SigmaInv(usize),
 }
 
+impl BrGen {
+    pub fn inverse(&self) -> Self {
+        match self {
+            Self::Sigma(a) => Self::SigmaInv(*a),
+            Self::SigmaInv(a) => Self::Sigma(*a),
+        }
+    }
+
+    pub fn shift(&self, n: usize) -> Self {
+        match *self {
+            Self::Sigma(i) => Self::Sigma(n - i),
+            Self::SigmaInv(i) => Self::SigmaInv(n - i),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Braid {
     pub contents: Vec<BrGen>,
@@ -74,8 +90,7 @@ impl Permutation for Braid {
         let mut ret = x;
         for g in &self.contents {
             let a = match g {
-                BrGen::Sigma(val) => val,
-                BrGen::SigmaInv(val) => val,
+                BrGen::Sigma(val) | BrGen::SigmaInv(val) => val,
             };
             if ret == *a {
                 ret += 1;
@@ -169,13 +184,14 @@ impl Braid {
         self.contents.iter()
     }
 
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, BrGen> {
+        self.contents.iter_mut()
+    }
+
     pub fn invert(&mut self) {
         self.contents.reverse();
-        for g in self.contents.iter_mut() {
-            *g = match g {
-                BrGen::Sigma(a) => BrGen::SigmaInv(*a),
-                BrGen::SigmaInv(a) => BrGen::Sigma(*a),
-            };
+        for g in self.iter_mut() {
+            *g = g.inverse();
         }
     }
 
@@ -187,10 +203,7 @@ impl Braid {
 
     pub fn shift(&mut self) {
         for g in &mut self.contents {
-            *g = match g {
-                BrGen::Sigma(i) => BrGen::Sigma(self.n - *i),
-                BrGen::SigmaInv(i) => BrGen::SigmaInv(self.n - *i),
-            }
+            *g = g.shift(self.n);
         }
     }
 
@@ -258,10 +271,8 @@ impl Braid {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        braid::*,
-        permutation::*,
-    };
+    use crate::braid::*;
+
     #[test]
     fn permut_tests() {
         // Based off of the Haskell permutationBraid
