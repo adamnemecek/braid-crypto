@@ -33,63 +33,62 @@ impl Braid {
      * NOTE: This is based on step 1 of Garside Normal Form
      * O(n^2)
      */
-    fn neg_pow_to_permute(i: usize, n: usize) -> Self {
+    pub fn neg_pow_to_permute(i: usize, n: usize) -> Self {
         let mut p: VecPermutation = (1..=n).rev().collect();
         // Swap i + 1 with i
         p.swap(i + 1, i);
         Self::from_slice(&p[..])
     }
-}
 
-/**
- * Decompose a braid into a power of delta_n and a positive braid on the right.
- * NOTE: This is based on step 1 and 2 of Garside Normal Form
- * O(L*n^2 + L^2) where L is the length of b
- */
-fn left_slide_delta_form(b: &Braid) -> (isize, Braid) {
-    let n = b.n;
-    let mut final_vec: Vec<BrGen> = b.contents.clone();
-    let mut counter = 0;
-    let mut acting_index = 0;
-    // O(Ln^2 + L^2)
-    while acting_index < final_vec.len() {
-        if let BrGen::SigmaInv(i) = final_vec[acting_index] {
-            // This generator needs to be replaced
-            let mut loc_of_delta = acting_index as isize - 1;
-            // remove the "bad" inverse generator
-            final_vec.remove(acting_index);
-            // replacement = the replacement (minus the delta)
-            // O(n^2)
-            let replacement = Braid::neg_pow_to_permute(i, n);
-            for symb in &replacement.contents {
-                final_vec.insert(acting_index, *symb);
+    /**
+     * Decompose a braid into a power of delta_n and a positive braid on the right.
+     * NOTE: This is based on step 1 and 2 of Garside Normal Form
+     * O(L*n^2 + L^2) where L is the length of b
+     */
+    pub fn left_slide_delta_form(&self) -> (isize, Self) {
+        let n = self.n;
+        let mut contents: Vec<BrGen> = self.contents.clone();
+        let mut counter = 0;
+        let mut acting_index = 0;
+        // O(Ln^2 + L^2)
+        while acting_index < contents.len() {
+            if let BrGen::SigmaInv(i) = contents[acting_index] {
+                // This generator needs to be replaced
+                let mut loc_of_delta = acting_index as isize - 1;
+                // remove the "bad" inverse generator
+                contents.remove(acting_index);
+                // replacement = the replacement (minus the delta)
+                // O(n^2)
+                let replacement = Braid::neg_pow_to_permute(i, n);
+                for symb in &replacement.contents {
+                    contents.insert(acting_index, *symb);
+                    acting_index += 1;
+                }
+                // Now go backwards and replace sigma_a with sigma_{n - a}
+                // O(L) where L is the length of b in terms of generators
+                while loc_of_delta != -1 {
+                    let BrGen::Sigma(a) = contents[loc_of_delta as usize] else {
+                        panic!("There was a negative sigma?");
+                    };
+                    contents[loc_of_delta as usize] = BrGen::Sigma(n - a);
+                    loc_of_delta -= 1;
+                }
+                counter -= 1;
+            } else {
+                // Skip this generator and move on the check the next
                 acting_index += 1;
             }
-            // Now go backwards and replace sigma_a with sigma_{n - a}
-            // O(L) where L is the length of b in terms of generators
-            while loc_of_delta != -1 {
-                let BrGen::Sigma(a) = final_vec[loc_of_delta as usize] else {
-                    panic!("There was a negative sigma?");
-                };
-                final_vec[loc_of_delta as usize] = BrGen::Sigma(n - a);
-                loc_of_delta -= 1;
-            }
-            counter -= 1;
-        } else {
-            // Skip this generator and move on the check the next
-            acting_index += 1;
         }
+
+        (
+            counter,
+            Self {
+                contents,
+                n: self.n,
+            },
+        )
     }
-
-    (
-        counter,
-        Braid {
-            contents: final_vec,
-            n: b.n,
-        },
-    )
 }
-
 // A helpful function for filtering our original braid into what we need
 fn sym_to_i(sym: &BrGen) -> usize {
     let BrGen::Sigma(a) = *sym else {
@@ -158,14 +157,13 @@ impl Braid {
 
         res
     }
-}
-impl Braid {
+
     // TODO: Re-evaluate O() of as_garside form with workingindex -= 1 change
     // O(Ln^2 + L^2 + p(L^2 + Ln^2)) where p is the number of permutations which make up self
     pub fn as_garside_form(&self) -> GarsideForm {
         let n = self.n;
         // O(L*n^2 + L^2)
-        let (exponent, braid) = left_slide_delta_form(&self);
+        let (exponent, braid) = self.left_slide_delta_form();
         // O(L)
         let mut bs = braid.break_into_permutations();
         let mut working_index = 0;
@@ -269,7 +267,7 @@ mod tests {
     fn left_slide_delta_form_tests() {
         // Based on example 1.2 from https://arxiv.org/pdf/0711.3941.pdf
         let w = Braid::from_sigmas(&[1, -3, 2], 4);
-        let lsdf = left_slide_delta_form(&w);
+        let lsdf = w.left_slide_delta_form();
         assert_eq!(-1, lsdf.0);
         let expected = Braid::from_sigmas(&vec![3, 3, 2, 1, 3, 2, 2], 4);
         assert_eq!(expected.contents, lsdf.1.contents);
