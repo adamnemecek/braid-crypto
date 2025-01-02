@@ -72,6 +72,18 @@ impl Braid {
     }
 }
 
+fn do_swap(fwd: &mut Vec<usize>, inv: &mut Vec<usize>, i: usize) {
+    let a = inv[i - 1];
+    let b = inv[i];
+    inv[i - 1] = b;
+    inv[i] = a;
+
+    let u = fwd[a - 1];
+    let v = fwd[b - 1];
+    fwd[a - 1] = v;
+    fwd[b - 1] = u;
+}
+
 impl Permutation for Braid {
     fn id(n: usize) -> Self {
         Self {
@@ -91,12 +103,12 @@ impl Permutation for Braid {
     fn position(&self, x: usize) -> usize {
         let mut ret = x;
         for g in &self.contents {
-            let a = match g {
+            let a = *match g {
                 BrGen::Sigma(val) | BrGen::SigmaInv(val) => val,
             };
-            if ret == *a {
+            if ret == a {
                 ret += 1;
-            } else if ret == *a + 1 {
+            } else if ret == a + 1 {
                 ret -= 1;
             }
         }
@@ -116,23 +128,12 @@ impl Permutation for Braid {
     fn from_slice(perm: &[usize]) -> Self {
         // Assuming that perm is a valid permutation
         let n = perm.len();
-        let mut cfwd: Vec<usize> = (1..=n).collect();
-        let mut cinv: Vec<usize> = (1..=n).collect();
-        let mut contents: Vec<usize> = Vec::with_capacity(n);
+        let mut cfwd: Vec<_> = (1..=n).collect();
+        let mut cinv: Vec<_> = cfwd.clone();
+        let mut contents = Vec::with_capacity(n);
 
         // Pass a reference of cfwdRef each time to doswap
         // O(1)
-        let mut do_swap = |i: usize, cfwd_ref: &mut Vec<usize>| {
-            let a = cinv[i - 1];
-            let b = cinv[i];
-            cinv[i - 1] = b;
-            cinv[i] = a;
-
-            let u = cfwd_ref[a - 1];
-            let v = cfwd_ref[b - 1];
-            cfwd_ref[a - 1] = v;
-            cfwd_ref[b - 1] = u;
-        };
 
         let mut phase = 1;
 
@@ -141,9 +142,8 @@ impl Permutation for Braid {
             let target = perm[phase - 1];
             let source = cfwd[target - 1];
             // Note that this is immutable
-            let this: Vec<usize> = (phase..source).rev().collect();
-            for num in this {
-                do_swap(num, &mut cfwd);
+            for num in (phase..source).rev() {
+                do_swap(&mut cfwd, &mut cinv, num);
                 contents.push(num);
             }
             phase += 1;
