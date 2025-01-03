@@ -75,7 +75,7 @@ impl Braid {
                     self.swap_mutation();
                 }
                 3 => {
-                    self.exchange_mutation();
+                    self.exchange_mutations();
                 }
                 _ => {}
             }
@@ -100,34 +100,39 @@ impl Braid {
         }
     }
 
+    pub fn exchange_mutation(&mut self, idx: usize) {
+        assert!(idx < self.gens.len() - 2);
+        let kern1 = self.gens[idx];
+        let kern2 = self.gens[idx + 1];
+        let kern3 = self.gens[idx + 2];
+
+        match (kern1, kern2, kern3) {
+            (BrGen::Sigma(a), BrGen::Sigma(b), BrGen::Sigma(c)) => {
+                if a == c && b == a + 1 {
+                    self.gens[idx] = BrGen::Sigma(a + 1);
+                    self.gens[idx + 1] = BrGen::Sigma(a);
+                    self.gens[idx + 2] = BrGen::Sigma(a + 1);
+                }
+            }
+            (BrGen::SigmaInv(a), BrGen::SigmaInv(b), BrGen::SigmaInv(c)) => {
+                if a == c && b == a + 1 {
+                    self.gens[idx] = BrGen::SigmaInv(a + 1);
+                    self.gens[idx + 1] = BrGen::SigmaInv(a);
+                    self.gens[idx + 2] = BrGen::SigmaInv(a + 1);
+                }
+            }
+            _ => {}
+        }
+    }
+
     // reidemeister 3
-    pub fn exchange_mutation(&mut self) {
+    pub fn exchange_mutations(&mut self) {
         if self.gens.len() < 3 {
             return;
         }
 
         for idx in 0..self.gens.len() - 2 {
-            let kern1 = self.gens[idx];
-            let kern2 = self.gens[idx + 1];
-            let kern3 = self.gens[idx + 2];
-
-            match (kern1, kern2, kern3) {
-                (BrGen::Sigma(a), BrGen::Sigma(b), BrGen::Sigma(c)) => {
-                    if a == c && b == a + 1 {
-                        self.gens[idx] = BrGen::Sigma(a + 1);
-                        self.gens[idx + 1] = BrGen::Sigma(a);
-                        self.gens[idx + 2] = BrGen::Sigma(a + 1);
-                    }
-                }
-                (BrGen::SigmaInv(a), BrGen::SigmaInv(b), BrGen::SigmaInv(c)) => {
-                    if a == c && b == a + 1 {
-                        self.gens[idx] = BrGen::SigmaInv(a + 1);
-                        self.gens[idx + 1] = BrGen::SigmaInv(a);
-                        self.gens[idx + 2] = BrGen::SigmaInv(a + 1);
-                    }
-                }
-                _ => {}
-            }
+            self.exchange_mutation(idx);
         }
     }
 }
@@ -149,7 +154,7 @@ mod tests {
         println!("{:?}", b);
 
         let mut c = Braid::from_sigmas(&[1, 2, 1, 2, 3, 4, 3], 5);
-        c.exchange_mutation();
+        c.exchange_mutations();
         println!("{:?}", c);
     }
 }
