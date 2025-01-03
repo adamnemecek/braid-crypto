@@ -19,6 +19,16 @@ pub enum BrGen {
     SigmaInv(usize),
 }
 
+impl From<isize> for BrGen {
+    fn from(s: isize) -> Self {
+        match s {
+            ..0 => Self::SigmaInv(s.abs() as _),
+            0 => panic!("Invalid s given to from_sigmas"),
+            1.. => Self::Sigma(s as _),
+        }
+    }
+}
+
 impl BrGen {
     pub fn inverse(&self) -> Self {
         match self {
@@ -35,7 +45,7 @@ impl BrGen {
     }
 
     pub fn permute(&self, v: &mut Vec<usize>) {
-        let BrGen::Sigma(a) = self else {
+        let Self::Sigma(a) = self else {
             panic!("The braid given was not positive!");
         };
         v.swap_(*a + 1, *a);
@@ -84,7 +94,7 @@ impl Permutation for Braid {
     }
 
     fn swap_(&mut self, _a: usize, _b: usize) {
-        panic!("unimplimented")
+        unimplemented!()
     }
 
     fn position(&self, x: usize) -> usize {
@@ -115,8 +125,8 @@ impl Permutation for Braid {
     fn from_slice(perm: &[usize]) -> Self {
         // Assuming that perm is a valid permutation
         let n = perm.len();
-        let mut cfwd: Vec<_> = (1..=n).collect();
-        let mut cinv: Vec<_> = cfwd.clone();
+        let mut fwd: Vec<_> = (1..=n).collect();
+        let mut inv: Vec<_> = fwd.clone();
         let mut gens = Vec::with_capacity(n);
 
         // Pass a reference of cfwdRef each time to doswap
@@ -125,10 +135,10 @@ impl Permutation for Braid {
         //O(n^2)
         for phase in 1..n {
             let target = perm[phase - 1];
-            let source = cfwd[target - 1];
+            let source = fwd[target - 1];
             // Note that this is immutable
             for num in (phase..source).rev() {
-                do_swap(&mut cfwd, &mut cinv, num);
+                do_swap(&mut fwd, &mut inv, num);
                 gens.push(num);
             }
         }
@@ -144,15 +154,7 @@ impl Braid {
     }
 
     pub fn from_sigmas(sigmas: &[isize], n: usize) -> Self {
-        let gens = sigmas
-            .iter()
-            .cloned()
-            .map(|s| match s {
-                ..0 => BrGen::SigmaInv(s.abs() as _),
-                0 => panic!("Invalid s given to from_sigmas"),
-                1.. => BrGen::Sigma(s as _),
-            })
-            .collect();
+        let gens = sigmas.iter().cloned().map(<_>::from).collect();
         Self { gens, n }
     }
 

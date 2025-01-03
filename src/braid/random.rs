@@ -118,6 +118,7 @@ impl Braid {
         if self.gens.len() < 3 {
             return;
         }
+
         for idx in 0..self.gens.len() - 2 {
             let kern1 = self.gens[idx];
             let kern2 = self.gens[idx + 1];
