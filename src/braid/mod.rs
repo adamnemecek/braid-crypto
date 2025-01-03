@@ -23,7 +23,7 @@ impl From<isize> for BrGen {
     fn from(s: isize) -> Self {
         match s {
             ..0 => Self::SigmaInv(s.abs() as _),
-            0 => panic!("Invalid s given to from_sigmas"),
+            0 => panic!("BrGen cannot be 0"),
             1.. => Self::Sigma(s as _),
         }
     }
@@ -38,9 +38,9 @@ impl BrGen {
     }
 
     pub fn shift(&self, n: usize) -> Self {
-        match *self {
-            Self::Sigma(i) => Self::Sigma(n - i),
-            Self::SigmaInv(i) => Self::SigmaInv(n - i),
+        match self {
+            Self::Sigma(i) => Self::Sigma(n - *i),
+            Self::SigmaInv(i) => Self::SigmaInv(n - *i),
         }
     }
 
@@ -203,21 +203,21 @@ impl Braid {
     pub fn starting_set(&self) -> IndexSet<usize> {
         let n = self.n;
         let mut res = IndexSet::with_capacity(n);
-        let mut string_pos = VecPermutation::id(n);
+        let mut pos = VecPermutation::id(n);
         // Iterate through each of our generators
         for g in &self.gens {
             let BrGen::Sigma(a) = g else {
                 panic!("The braid given was not positive!");
             };
-            let sa = string_pos[*a - 1];
-            let sb = string_pos[*a];
+            let sa = pos[*a - 1];
+            let sb = pos[*a];
             if sa == sb + 1 {
                 res.insert(sb);
             } else if sb == sa + 1 {
                 res.insert(sa);
             }
             // swap the strings
-            string_pos.swap_(*a + 1, *a);
+            pos.swap_(*a + 1, *a);
         }
         res
     }
