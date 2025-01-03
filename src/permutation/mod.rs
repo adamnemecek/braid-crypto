@@ -27,14 +27,14 @@ pub trait Permutation {
         (1..=n).all(|i| self.position(i) == n - i + 1)
     }
 
-    fn compose<B: Permutation, C: Permutation>(&self, second: &B) -> C {
-        debug_assert_eq!(self.size(), second.size());
+    fn compose<B: Permutation, C: Permutation>(&self, other: &B) -> C {
+        debug_assert_eq!(self.size(), other.size());
         let n = self.size();
         let mut res = VecPermutation::id(n);
         for strand_number in 1..=n {
             let after_first = self.position(strand_number);
             println!("{:?}", after_first);
-            let result_place = second.position(after_first);
+            let result_place = other.position(after_first);
             res[result_place - 1] = strand_number;
         }
         C::from_slice(&res[..])
