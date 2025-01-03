@@ -67,7 +67,9 @@ impl Braid {
         for _ in 0..n {
             match rng.gen_range(1, 4) {
                 1 => {
-                    self.insert_mutation(&mut rng);
+                    let idx = rng.gen_range(0, self.gens.len());
+                    let v = rng.gen_range(1, self.n);
+                    self.insert_mutation(idx, v);
                 }
                 2 => {
                     self.swap_mutation();
@@ -80,9 +82,7 @@ impl Braid {
         }
     }
 
-    pub fn insert_mutation<CR: CryptoRng + RngCore>(&mut self, rng: &mut CR) {
-        let idx = rng.gen_range(0, self.gens.len());
-        let v = rng.gen_range(1, self.n);
+    pub fn insert_mutation(&mut self, idx: usize, v: usize) {
         self.gens.insert(idx, BrGen::Sigma(v));
         self.gens.insert(idx + 1, BrGen::SigmaInv(v));
     }
@@ -93,14 +93,14 @@ impl Braid {
             let curr = self.gens[indx];
             match (last, curr) {
                 (BrGen::Sigma(a), BrGen::Sigma(b)) => {
-                    if (a as isize - b as isize).abs() > 1 {
+                    if a.abs_diff(b) > 1 {
                         let tmp = self.gens[indx].clone();
                         self.gens[indx] = self.gens[indx - 1];
                         self.gens[indx - 1] = tmp;
                     }
                 }
                 (BrGen::SigmaInv(a), BrGen::SigmaInv(b)) => {
-                    if (a as isize - b as isize).abs() > 1 {
+                    if a.abs_diff(b) > 1 {
                         let tmp = self.gens[indx].clone();
                         self.gens[indx] = self.gens[indx - 1];
                         self.gens[indx - 1] = tmp;
