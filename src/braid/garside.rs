@@ -200,7 +200,7 @@ impl Braid {
                         // and replace bi1 with it
                         bi1.gens = pb.gens.clone();
                     } // For j to go out of scope (j borrows bi1 and bi)
-                      // O(L)
+                    // O(L)
                     next_starting = bi1.starting_set();
                     // O(L)
                     prev_finishing = bi.finishing_set();

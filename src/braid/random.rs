@@ -1,14 +1,14 @@
 use rand::{
+    CryptoRng,
+    Rng,
+    RngCore,
+    SeedableRng,
     distributions::{
         Distribution,
         Standard,
     },
     os::OsRng,
     prng::hc128::*,
-    CryptoRng,
-    Rng,
-    RngCore,
-    SeedableRng,
 };
 // Import Braid and members
 use crate::{
@@ -89,26 +89,22 @@ impl Braid {
 
     pub fn swap_mutation(&mut self) {
         let mut last = self.gens[0];
-        for indx in 1..self.gens.len() {
-            let curr = self.gens[indx];
+        for idx in 1..self.gens.len() {
+            let curr = self.gens[idx];
             match (last, curr) {
                 (BrGen::Sigma(a), BrGen::Sigma(b)) => {
                     if a.abs_diff(b) > 1 {
-                        let tmp = self.gens[indx].clone();
-                        self.gens[indx] = self.gens[indx - 1];
-                        self.gens[indx - 1] = tmp;
+                        self.gens.swap(idx, idx - 1);
                     }
                 }
                 (BrGen::SigmaInv(a), BrGen::SigmaInv(b)) => {
                     if a.abs_diff(b) > 1 {
-                        let tmp = self.gens[indx].clone();
-                        self.gens[indx] = self.gens[indx - 1];
-                        self.gens[indx - 1] = tmp;
+                        self.gens.swap(idx, idx - 1);
                     }
                 }
                 _ => {}
             }
-            last = self.gens[indx];
+            last = self.gens[idx];
         }
     }
 
