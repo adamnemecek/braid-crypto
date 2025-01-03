@@ -19,6 +19,15 @@ pub enum BrGen {
     SigmaInv(usize),
 }
 
+impl From<BrGen> for isize {
+    fn from(value: BrGen) -> Self {
+        match value {
+            BrGen::Sigma(a) => a as _,
+            BrGen::SigmaInv(a) => -(a as isize),
+        }
+    }
+}
+
 impl From<isize> for BrGen {
     fn from(s: isize) -> Self {
         match s {
@@ -26,6 +35,35 @@ impl From<isize> for BrGen {
             0 => panic!("BrGen cannot be 0"),
             1.. => Self::Sigma(s as _),
         }
+    }
+}
+
+impl From<usize> for BrGen {
+    fn from(s: usize) -> Self {
+        assert!(s > 0);
+        Self::Sigma(s)
+    }
+}
+
+impl PartialOrd for BrGen {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.cmp(other).into()
+    }
+}
+
+impl Ord for BrGen {
+    #[inline]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // self.into::<isize>().cmp(other.into())
+        isize::from(*self).cmp(&isize::from(*other))
+        // match (self, other) {
+        //     (Self::Sigma(a), Self::Sigma(b)) |
+        //     // the flip b a is intentional it so that
+        //     (Self::SigmaInv(b), Self::SigmaInv(a)) => a.cmp(b),
+        //     (Self::Sigma(_), Self::SigmaInv(_)) => std::cmp::Ordering::Greater,
+        //     (Self::SigmaInv(_), Self::Sigma(_)) => std::cmp::Ordering::Less,
+        // }
     }
 }
 
