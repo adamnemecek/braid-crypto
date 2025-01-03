@@ -88,23 +88,15 @@ impl Braid {
     }
 
     pub fn swap_mutation(&mut self) {
-        let mut last = self.gens[0];
-        for idx in 1..self.gens.len() {
-            let curr = self.gens[idx];
-            match (last, curr) {
-                (BrGen::Sigma(a), BrGen::Sigma(b)) => {
+        for idx in 0..self.gens.len() - 1 {
+            match (self.gens[idx], self.gens[idx + 1]) {
+                (BrGen::Sigma(a), BrGen::Sigma(b)) | (BrGen::SigmaInv(a), BrGen::SigmaInv(b)) => {
                     if a.abs_diff(b) > 1 {
-                        self.gens.swap(idx, idx - 1);
-                    }
-                }
-                (BrGen::SigmaInv(a), BrGen::SigmaInv(b)) => {
-                    if a.abs_diff(b) > 1 {
-                        self.gens.swap(idx, idx - 1);
+                        self.gens.swap(idx, idx + 1);
                     }
                 }
                 _ => {}
             }
-            last = self.gens[idx];
         }
     }
 
