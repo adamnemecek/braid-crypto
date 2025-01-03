@@ -34,7 +34,7 @@ impl BrGen {
         }
     }
 
-    pub fn apply(&self, v: &mut Vec<usize>) {
+    pub fn permute(&self, v: &mut Vec<usize>) {
         let BrGen::Sigma(a) = self else {
             panic!("The braid given was not positive!");
         };
@@ -65,15 +65,6 @@ impl std::ops::Mul for Braid {
     }
 }
 
-impl Braid {
-    // O(L)
-    pub fn braid_to_permutation_with_starting(&self, v: &mut Vec<usize>) {
-        // Iterate through each of our generators
-        for g in self.iter() {
-            g.apply(v);
-        }
-    }
-}
 #[inline]
 fn do_swap(fwd: &mut Vec<usize>, inv: &mut Vec<usize>, i: usize) {
     // Swap elements in inv
@@ -113,7 +104,7 @@ impl Permutation for Braid {
 
     fn as_vec(&self) -> Vec<usize> {
         let mut starting: Vec<usize> = (1..=self.n).collect();
-        self.braid_to_permutation_with_starting(&mut starting);
+        self.permute(&mut starting);
         starting
     }
 
@@ -232,30 +223,21 @@ impl Braid {
         res
     }
 
+    pub fn permute(&self, v: &mut Vec<usize>) {
+        for g in &self.gens {
+            g.permute(v);
+        }
+    }
+
     /**
      * Find the finishing set of a braid. Original algorithm. Assumes
      * this is a positive permutation braid.
      */
     pub fn finishing_set(&self) -> IndexSet<usize> {
-        let n = self.n;
-        let mut res = IndexSet::with_capacity(n);
-        let mut string_pos = VecPermutation::id(n);
+        let mut p = VecPermutation::id(self.n);
+        self.permute(&mut p);
         // Iterate through each of our generators
-        for g in &self.gens {
-            let BrGen::Sigma(a) = g else {
-                // swap the strings
-                panic!("The braid given was not positive!");
-            };
-            string_pos.swap_(*a + 1, *a);
-        }
-
-        for i in 1..n {
-            if string_pos[i] < string_pos[i - 1] {
-                res.insert(i);
-            }
-        }
-
-        res
+        (1..self.n).filter(|i| p[*i] < p[*i - 1]).collect()
     }
 
     pub fn as_vec_ser(&self) -> Vec<u8> {
