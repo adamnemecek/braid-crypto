@@ -56,8 +56,7 @@ impl Braid {
 
         for _ in 0..num_perms {
             let this_permutation = random_permutation(n, complexity, miss_rate, &mut rng);
-            let to_add: Self = Permutation::from_slice(&this_permutation[..]);
-            result = result * to_add;
+            result = result * Self::from_slice(&this_permutation[..]);
         }
 
         result
@@ -82,11 +81,10 @@ impl Braid {
     }
 
     pub fn insert_mutation<CR: CryptoRng + RngCore>(&mut self, rng: &mut CR) {
-        let insertion_point = rng.gen_range(0, self.gens.len());
-        let to_insert = rng.gen_range(1, self.n);
-        self.gens.insert(insertion_point, BrGen::Sigma(to_insert));
-        self.gens
-            .insert(insertion_point + 1, BrGen::SigmaInv(to_insert));
+        let idx = rng.gen_range(0, self.gens.len());
+        let v = rng.gen_range(1, self.n);
+        self.gens.insert(idx, BrGen::Sigma(v));
+        self.gens.insert(idx + 1, BrGen::SigmaInv(v));
     }
 
     pub fn swap_mutation(&mut self) {
@@ -114,6 +112,7 @@ impl Braid {
         }
     }
 
+    // reidemeister 3
     pub fn exchange_mutation(&mut self) {
         if self.gens.len() < 3 {
             return;

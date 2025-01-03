@@ -82,7 +82,7 @@ impl BrGen {
         }
     }
 
-    pub fn permute(&self, v: &mut Vec<usize>) {
+    pub fn permute(&self, v: &mut impl Permutation) {
         let Self::Sigma(a) = self else {
             panic!("The braid given was not positive!");
         };
