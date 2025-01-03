@@ -55,8 +55,8 @@ impl Braid {
         let mut result = Self::from_sigmas(&[], n);
 
         for _ in 0..num_perms {
-            let this_permutation = random_permutation(n, complexity, miss_rate, &mut rng);
-            result = result * Self::from_slice(&this_permutation[..]);
+            let p = random_permutation(n, complexity, miss_rate, &mut rng);
+            result = result * Self::from_slice(&p[..]);
         }
 
         result
