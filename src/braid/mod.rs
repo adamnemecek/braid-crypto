@@ -122,10 +122,8 @@ impl Permutation for Braid {
         // Pass a reference of cfwdRef each time to doswap
         // O(1)
 
-        let mut phase = 1;
-
         //O(n^2)
-        while phase < n {
+        for phase in 1..n {
             let target = perm[phase - 1];
             let source = cfwd[target - 1];
             // Note that this is immutable
@@ -133,7 +131,6 @@ impl Permutation for Braid {
                 do_swap(&mut cfwd, &mut cinv, num);
                 gens.push(num);
             }
-            phase += 1;
         }
 
         Self::from_positive_sigmas(&gens, n)

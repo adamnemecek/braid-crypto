@@ -118,30 +118,28 @@ impl Braid {
         if self.gens.len() < 3 {
             return;
         }
-        let mut indx = 0;
-        while indx < self.gens.len() - 2 {
-            let kern1 = self.gens[indx];
-            let kern2 = self.gens[indx + 1];
-            let kern3 = self.gens[indx + 2];
+        for idx in 0..self.gens.len() - 2 {
+            let kern1 = self.gens[idx];
+            let kern2 = self.gens[idx + 1];
+            let kern3 = self.gens[idx + 2];
 
             match (kern1, kern2, kern3) {
                 (BrGen::Sigma(a), BrGen::Sigma(b), BrGen::Sigma(c)) => {
                     if a == c && b == a + 1 {
-                        self.gens[indx] = BrGen::Sigma(a + 1);
-                        self.gens[indx + 1] = BrGen::Sigma(a);
-                        self.gens[indx + 2] = BrGen::Sigma(a + 1);
+                        self.gens[idx] = BrGen::Sigma(a + 1);
+                        self.gens[idx + 1] = BrGen::Sigma(a);
+                        self.gens[idx + 2] = BrGen::Sigma(a + 1);
                     }
                 }
                 (BrGen::SigmaInv(a), BrGen::SigmaInv(b), BrGen::SigmaInv(c)) => {
                     if a == c && b == a + 1 {
-                        self.gens[indx] = BrGen::SigmaInv(a + 1);
-                        self.gens[indx + 1] = BrGen::SigmaInv(a);
-                        self.gens[indx + 2] = BrGen::SigmaInv(a + 1);
+                        self.gens[idx] = BrGen::SigmaInv(a + 1);
+                        self.gens[idx + 1] = BrGen::SigmaInv(a);
+                        self.gens[idx + 2] = BrGen::SigmaInv(a + 1);
                     }
                 }
                 _ => {}
             }
-            indx += 1;
         }
     }
 }
